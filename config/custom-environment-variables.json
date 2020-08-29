@@ -1,0 +1,9 @@
+{
+  "environment": "devApp_environment",
+  "jwtPrivateKey": "devApp_jwtPrivateKey",
+  "bcryptSalt": "devApp_bcryptSalt",
+  "dbMlab": "devApp_dbMlab_string",
+  "email.email_api_key": "devApp_email_api_key",
+  "app_domain": "devApp_app_domain",
+  "app_portal_domain": "devApp_app_portal_domain"
+}
