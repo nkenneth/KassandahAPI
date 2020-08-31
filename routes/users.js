@@ -152,14 +152,14 @@ router.post("/", async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
-  const { firstName, lastName, phone, password, role } = req.body;
+  const { firstName, lastName, phone, password, roleId } = req.body;
 
-  console.log( { firstName, lastName, phone, password, email, role } );
+  console.log( { firstName, lastName, phone, password, email, roleId } );
 
   try {
 
     //instantiate User model
-    user = new User({ firstName, lastName, email, phone, password, role, status:"inactive" });
+    user = new User({ firstName, lastName, email, phone, password, roleId, status:"inactive" });
 
     //create salt for user password hash
     const salt = await bcrypt.genSalt(10);
@@ -172,7 +172,7 @@ router.post("/", async (req, res) => {
 
     user.userId = user._id;
   
-    let result = _.pick(user, ["userId", "role", "firstName", "lastName", "phone", "email", "status"]);
+    let result = _.pick(user, ["userId", "roleId", "firstName", "lastName", "phone", "email", "status"]);
     
     // await sendUserVerificationEmail(user.email);
 
@@ -272,6 +272,7 @@ router.post("/login", async (req, res) => {
   if (req.body.email && req.body.email != "") criteria.email = req.body.email.toLowerCase();
 
   let user = await User.findOne(criteria);
+ 
   if (!user) {
     return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
   }
@@ -282,14 +283,25 @@ router.post("/login", async (req, res) => {
   const validPassword = await bcrypt.compare(req.body.password, user.password);
   if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
 
-  const token = user.generateAuthToken();
+  let roleData = await Role.findById(user.roleId);
+  const role = roleData.role;
+
+  const token = jwt.sign(
+    {
+        userId: user._id,
+        email: user.email,
+        role: role
+    },
+    config.get("jwtPrivateKey")
+  );
+
+
   user.accessToken = token;
-  user.lastLogin = Math.round(new Date() / 1000);
   user.lastLogin = new Date();
   await user.save();
   user.userId = user._id;
 
-  let roleData = await Role.findOne({ role: user.role });
+  
 
   if (roleData) {
     user.permissions = roleData.permissions;
@@ -297,47 +309,50 @@ router.post("/login", async (req, res) => {
 
   let details = _.pick(user, [
     "userId",
-    "role",
-    "permissions",
-    "fullName",
+    "firstName",
+    "lastName",
     "phone",
     "email",
     "status",
-    "stateName",
-    "stateCode",
-    "stateId",
     "profilePic",
     "lastLogin",
   ]);
-  return response.withData(res, {token: token, details: details, roles: user.role, permissions: user.permissions });
+  return response.withData(res, {token: token, details: details, role: role, permissions: user.permissions });
 });
 
 // user password change
-router.post("/changePassword", userAuth, async (req, res) => {
+router.post("/password/change", userAuth, async (req, res) => {
   const { error } = validateChangePassword(req.body);
-  if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+  if (error) return response.error(res, error.details[0].message); 
 
   let user = await User.findById(req.jwtData.userId);
-  if (!user) return res.status(400).send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INVALID_USER });
+  if (!user) return response.error(res, AUTH_CONSTANTS.INVALID_USER);
+  
+  const { oldPassword, newPassword } = req.body;
 
-  const validPassword = await bcrypt.compare(req.body.oldPassword, user.password);
+  const validPassword = await bcrypt.compare(oldPassword, user.password);
   if (!validPassword)
-    return res.status(400).send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INVALID_PASSWORD });
+    return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
 
-  let encryptPassword = await bcrypt.hash(req.body.newPassword, config.get("bcryptSalt"));
+  //create salt for user password hash
+  const salt = await bcrypt.genSalt(10);
+
+  //hash password and replace user password with the hashed password
+  let encryptPassword = await bcrypt.hash(newPassword, salt);
 
   user.password = encryptPassword;
   await user.save();
-  res.send({ statusCode: 200, message: "Success", data: AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS });
+  return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS); 
+
 });
 
-router.post("/password/reset/", userAuth, async (req, res) => {
+router.post("/password/reset/", async (req, res) => {
   const { error } = validateResetAdminPassword(req.body);
-  if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+  if (error) return response.error(res, error.details[0].message); 
 
   let user = await User.findById(req.body.userId);
   if (!user)
-    return res.status(400).send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INVALID_CREDENTIALS });
+    return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS); 
 
   var encryptPassword = await bcrypt.hash(req.body.newPassword, config.get("bcryptSalt"));
   user.password = encryptPassword;

@@ -20,10 +20,11 @@ adminAuth = async function (req, res, next) {
 
   let reqUserId = "";
   const token = req.header("Authorization");
+
   if (!token) 
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
     
-
+  
   try {
     const decoded = jwt.verify(token, config.get("jwtPrivateKey"));
     req.jwtData = decoded;
@@ -31,9 +32,10 @@ adminAuth = async function (req, res, next) {
     if (decoded.role !== "admin")
       return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN, 403);
 
-
-    let admin = await Admin.findOne({ _id: mongoose.Types.ObjectId(decoded.userId) });
+    
+    let admin = await User.findOne({ _id: mongoose.Types.ObjectId(decoded.userId) });
     // if (!admin || (user && user.accessToken !== token))
+
     if (!admin)
       return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
 
@@ -53,6 +55,7 @@ userAuth = async function (req, res, next) {
 
   let reqUserId = "";
   const token = req.header("Authorization");
+  console.log(token);
   if (!token)
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
 

@@ -3,10 +3,11 @@ const Joi = require("joi");
 const jwt = require("jsonwebtoken");
 const config = require("config");
 
+const { Role } = require("../models/role");
+
 const UserSchema = new mongoose.Schema({
     userId: String,
-    // role: { type: mongoose.Schema.Types.ObjectId, ref: "role" },
-    role: { type: String, default: "user" },
+    roleId: { type: mongoose.Schema.Types.ObjectId, ref: "role" },
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
     phone: { type: String, default: "", required: true, unique: true },
@@ -16,25 +17,11 @@ const UserSchema = new mongoose.Schema({
     status: { type: String, enum: ["active", "inactive", "blocked"], default: "inactive" },
     profilePic: { type: String, default: "" },
     modifiedDate: Number,
-    lastLogin: { type: Date, default: () => { return new Date(); }},
+    lastLogin: { type: Date }
     // lastLogin: Number,
-    lastActivityTime: { type: Number, default: () => { return Math.round(new Date() / 1000); } },
-    creationDate: { type: Date, default: () => { return new Date(); } },
-    insertDate: { type: Number, default: () => { return Math.round(new Date() / 1000); } }
-});
+}, {timestamps: true});
 
-UserSchema.methods.generateAuthToken = function () {
-    const token = jwt.sign(
-        {
-            userId: this._id,
-            email: this.email,
-            role: this.role,
-            subRole: this.role
-        },
-        config.get("jwtPrivateKey")
-    );
-    return token;
-};
+
 
 const User = mongoose.model("User", UserSchema);
 
@@ -58,7 +45,7 @@ const UserAudit = mongoose.model("Useraudit", userAuditSchema);
 
 function validateUserPost(user) {
     const schema = {
-        role: Joi.string().required(),
+        roleId: Joi.string().required(),
         firstName: Joi.string().min(2).max(200).required(),
         lastName: Joi.string().min(2).max(200).required(),
         password: Joi.string().min(6).max(20).required(),
