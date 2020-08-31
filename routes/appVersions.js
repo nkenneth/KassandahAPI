@@ -4,12 +4,13 @@ const mongoose = require("mongoose");
 const express = require("express");
 const router = express.Router();
 const { adminAuth } = require("../middleware/auth");
+const response = require("../services/response");
 const _ = require("lodash");
 const { Version, validateAppVersionPost } = require("../models/appVersion");
 
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validateAppVersionPost(req.body);
-    if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+    if (error) return response.validationErrors(error.details);
 
     let version = await Version.findOne({ appType: req.body.appType });
     if (!version) {

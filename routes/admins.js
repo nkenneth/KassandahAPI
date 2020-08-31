@@ -11,32 +11,32 @@ const express = require("express");
 const router = express.Router();
 const { User } = require("../models/user");
 
-router.post("/login", async (req, res) => {
-    const { error } = validateLogin(req.body);
-    if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+// router.post("/login", async (req, res) => {
+//     const { error } = validateLogin(req.body);
+//     if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
 
-    let email = req.body.email.toLowerCase();
+//     let email = req.body.email.toLowerCase();
 
-    let admin = await Admin.findOne({ email: email });
-    if (!admin)
-        return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
+//     let admin = await Admin.findOne({ email: email });
+//     if (!admin)
+//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
 
-    if (admin.status == "blocked")
-        return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.BLOCKED_ACCOUNT });
+//     if (admin.status == "blocked")
+//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.BLOCKED_ACCOUNT });
 
-    const validPassword = await bcrypt.compare(req.body.password, admin.password);
-    if (!validPassword)
-        return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
+//     const validPassword = await bcrypt.compare(req.body.password, admin.password);
+//     if (!validPassword)
+//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
 
-    const token = admin.generateAuthToken();
-    admin.accessToken = token;
-    admin.deviceToken = req.body.deviceToken;
+//     const token = admin.generateAuthToken();
+//     admin.accessToken = token;
+//     admin.deviceToken = req.body.deviceToken;
 
-    await admin.save();
-    let response = _.pick(admin, ["email", "status", "createdAt", "_id"]);
+//     await admin.save();
+//     let response = _.pick(admin, ["email", "status", "createdAt", "_id"]);
 
-    res.header("Authorization", token).send({ statusCode: 200, message: "Success", data: response });
-});
+//     res.header("Authorization", token).send({ statusCode: 200, message: "Success", data: response });
+// });
 
 router.get("/apiLogs", test("taaaa"), async (req, res) => {
 
@@ -75,25 +75,5 @@ router.get("/apiLogs", test("taaaa"), async (req, res) => {
     return res.send({ statusCode: 200, message: "Success", data: { apiList } });
 });
 
-// router.get("/cleardatabase", async (req, res) => {
-//     if (!req.query.otpToken)
-//         return res.status(400).send({ statusCode: 400, message: "Failure", data: "otpToken is mandatory query param" });
 
-//     let isValid = await verifyAndDeleteToken("9876543210", parseInt(req.query.otpToken), "OR");
-//     if (!isValid) {
-//         return res.status(400).send({ statusCode: 400, message: "Failure", data: "Invalid OTP Passed" });
-//     }
-
-    
-//     await User.deleteMany({});
-   
-
-//     let userArray = [
-//         { "fullName": "Anselm", "mobile": "1234567890", "email": "anselm@gigpap.com", "password": "$2b$10$oPd2gJERglqNiWXf3sYwIubzrVRrt25/wJP.wx9GEDiVAS6xDzA8y", "deviceToken": "", "version": "", "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ZWYyMDAyM2Y0ODRmODAwMTc2OTg4MmEiLCJyb2xlIjoidXNlciIsInN1YlJvbGUiOiJOSVRUIiwiaWF0IjoxNTkyOTE4MDc2fQ.qEHIe9kQYrzDmbiS6Xs8IMfeN4pp43i1N6X_yCnfQEs", "profilePic": "", "role": "admin", "address": "nigeria", "stateId": 10, "status": "active" },
-//         { "fullName": "Michael", "mobile": "1234567890", "email": "michael@gigpap.com", "password": "$2b$10$oPd2gJERglqNiWXf3sYwIubzrVRrt25/wJP.wx9GEDiVAS6xDzA8y", "deviceToken": "", "version": "", "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiI1ZWYyMDAyM2Y0ODRmODAwMTc2OTg4MmEiLCJyb2xlIjoidXNlciIsInN1YlJvbGUiOiJOSVRUIiwiaWF0IjoxNTkyOTE4MDc2fQ.qEHIe9kQYrzDmbiS6Xs8IMfeN4pp43i1N6X_yCnfQEs", "profilePic": "", "role": "admin", "address": "nigeria", "stateId": 10, "status": "active" }
-//     ]
-
-//     await User.insertMany(userArray);
-//     return res.send({ statusCode: 200, message: "Success", data: "DB cleaned" });
-// });
 module.exports = router;

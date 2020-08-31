@@ -9,8 +9,8 @@ module.exports = function(err, req, res, next) {
   // verbose
   // debug
   // silly
-
+  
   res
     .status(500)
-    .send({ statusCode: 500, message: "Failure", data: "Something failed. Please try again after 5 minutes" });
+    .send({ status: false, message: "Something failed. Please try again in a few" });
 };

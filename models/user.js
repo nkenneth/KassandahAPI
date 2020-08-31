@@ -5,22 +5,19 @@ const config = require("config");
 
 const UserSchema = new mongoose.Schema({
     userId: String,
-    role: String,
-    fullName: { type: String, default: "" },
-    mobile: { type: String, default: "", required: true, unique: true },
-    email: { type: String, default: "-", required: true, unique: true },
+    // role: { type: mongoose.Schema.Types.ObjectId, ref: "role" },
+    role: { type: String, default: "user" },
+    firstName: { type: String, default: "" },
+    lastName: { type: String, default: "" },
+    phone: { type: String, default: "", required: true, unique: true },
+    email: { type: String, default: "", required: true, unique: true },
     password: { type: String, default: "" },
-    stateId: Number,
-    address: String,
-    deviceToken: { type: String, default: "" },
-    version: { type: String, default: "" },
     accessToken: { type: String, default: "" },
-    status: { type: String, enum: ["active", "inactive", "blocked"] },
+    status: { type: String, enum: ["active", "inactive", "blocked"], default: "inactive" },
     profilePic: { type: String, default: "" },
-    createdBy: String,
-    modifiedBy: String,
     modifiedDate: Number,
-    lastLogin: Number,
+    lastLogin: { type: Date, default: () => { return new Date(); }},
+    // lastLogin: Number,
     lastActivityTime: { type: Number, default: () => { return Math.round(new Date() / 1000); } },
     creationDate: { type: Date, default: () => { return new Date(); } },
     insertDate: { type: Number, default: () => { return Math.round(new Date() / 1000); } }
@@ -31,7 +28,7 @@ UserSchema.methods.generateAuthToken = function () {
         {
             userId: this._id,
             email: this.email,
-            role: "user",
+            role: this.role,
             subRole: this.role
         },
         config.get("jwtPrivateKey")
@@ -45,11 +42,10 @@ const User = mongoose.model("User", UserSchema);
 const userAuditSchema = new mongoose.Schema({
     userId: String,
     role: String,
-    fullName: String,
-    mobile: String,
+    firstName: String,
+    lastName: String,
+    phone: String,
     email: String,
-    stateId: Number,
-    address: String,
     status: String,
     profilePic: String,
     createdBy: String,
@@ -63,14 +59,11 @@ const UserAudit = mongoose.model("Useraudit", userAuditSchema);
 function validateUserPost(user) {
     const schema = {
         role: Joi.string().required(),
-        fullName: Joi.string().min(1).max(200).required(),
+        firstName: Joi.string().min(2).max(200).required(),
+        lastName: Joi.string().min(2).max(200).required(),
         password: Joi.string().min(6).max(20).required(),
         email: Joi.string().email().required(),
-        mobile: Joi.string().required(),
-        address: Joi.string(),
-        stateId: Joi.number(),
-        deviceToken: Joi.string().min(1).max(200),
-        profilePic: Joi.string().min(1).max(300).allow("")
+        phone: Joi.string()
     };
     return Joi.validate(user, schema);
 }
@@ -79,11 +72,10 @@ function validateUserPut(user) {
     const schema = {
         userId: Joi.string().min(1).max(200),
         role: Joi.string(),
-        fullName: Joi.string().min(1).max(200),
+        firstName: Joi.string().min(2).max(200),
+        lastName: Joi.string().min(2).max(200),
         email: Joi.string().email(),
-        mobile: Joi.string(),
-        address: Joi.string(),
-        stateId: Joi.number(),
+        phone: Joi.string(),
         deviceToken: Joi.string().min(1).max(200),
         profilePic: Joi.string().min(1).max(200).allow(""),
         status: Joi.string().valid(["active", "inactive", "blocked"])
@@ -96,7 +88,7 @@ function validateUserListGet(user) {
         role: Joi.string(),
         email: Joi.string().email(),
         fullName: Joi.string().min(1).max(200),
-        mobile: Joi.string(),
+        phone: Joi.string(),
         startDate: Joi.string(),
         endDate: Joi.string(),
         status: Joi.any().valid(["active", "blocked", "suspended"])

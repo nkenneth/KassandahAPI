@@ -849,3 +849,19 @@ module.exports.rejectionMail = `
 			</tbody>
 		</table><img src='https://publicate.it/open/email/159008/pic.gif?1593165202' width='1' height='1' style='width:1px;height:1px;max-width:1px !important;max-height:1px !important;width:1px !important;height:1px !important;' /></body>
 	</html>`;
+
+module.exports.emailVerificationMail = `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <h3>Please Verify Your Email</h3>
+  <hr>
+  <p>To verify your email click the link shown <button><a href="#">Verify Email</a></button>  </p>
+</body>
+</html>
+`;

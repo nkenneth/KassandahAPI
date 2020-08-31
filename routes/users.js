@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const config = require("config");
 const bcrypt = require("bcrypt");
+const response = require("../services/response");
 const _ = require("lodash");
 const express = require("express");
 const router = express.Router();
@@ -38,7 +39,7 @@ router.get("/", userAuth, async (req, res) => {
     criteria.fullName = regexName;
   }
   if (req.query.email) criteria.email = req.query.email;
-  if (req.query.mobile) criteria.mobile = req.query.mobile;
+  if (req.query.phone) criteria.phone = req.query.phone;
   if (req.query.status) criteria.status = req.query.status;
   if (req.query.role) criteria.role = req.query.role;
   if (req.query.startDate) {
@@ -72,7 +73,7 @@ router.get("/", userAuth, async (req, res) => {
         role: 1,
         fullName: 1,
         email: 1,
-        mobile: 1,
+        phone: 1,
         address: 1,
         status: 1,
         stateName: { $arrayElemAt: ["$stateData.name", 0] },
@@ -116,7 +117,7 @@ router.get("/auditLog/:userId", userAuth, async (req, res) => {
         role: 1,
         fullName: 1,
         email: 1,
-        mobile: 1,
+        phone: 1,
         address: 1,
         status: 1,
         stateName: { $arrayElemAt: ["$stateData.name", 0] },
@@ -134,52 +135,54 @@ router.get("/auditLog/:userId", userAuth, async (req, res) => {
 });
 
 // Create a new User
-router.post("/", userAuth, async (req, res) => {
+router.post("/", async (req, res) => {
   const { error } = validateUserPost(req.body);
-  if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
-
-  var email;
-  if (req.body.email) email = req.body.email.toLowerCase() || "NMB";
+  if (error) return response.validationErrors(res, error.details[0].message);
 
   let user = await User.findOne({
-    $or: [{ email: email }, { mobile: req.body.mobile }],
+    $or: [{ email: req.body.email.toLowerCase() }, { phone: req.body.phone }],
   });
 
   if (user) {
-    if (email === user.email)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.EMAIL_ALREADY_EXISTS });
+    if (req.body.email === user.email)
+      return response.error(res, USER_CONSTANTS.EMAIL_ALREADY_EXISTS, 400);
 
-    if (req.body.mobile === user.mobile)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.MOBILE_ALREADY_EXISTS });
+    if (req.body.phone === user.phone)
+      return response.error(res, USER_CONSTANTS.PHONE_ALREADY_EXISTS, 400);
   }
 
-  user = new User(_.pick(req.body, ["role", "fullName", "mobile", "address", "stateId"]));
-  user.email = req.body.email.toLowerCase();
-  user.createdBy = req.jwtData.email;
-  user.status = "active";
+  const email = req.body.email.toLowerCase();
+  const { firstName, lastName, phone, password, role } = req.body;
 
-  // encrypt password
-  if (req.body.password) user.password = await bcrypt.hash(req.body.password, config.get("bcryptSalt"));
-  await user.save();
-  user.userId = user._id;
+  console.log( { firstName, lastName, phone, password, email, role } );
 
-  let response = _.pick(user, ["userId", "role", "fullName", "mobile", "email", "address", "stateId", "status"]);
+  try {
 
-  res.send({ statusCode: 200, message: "Success", data: response });
+    //instantiate User model
+    user = new User({ firstName, lastName, email, phone, password, role, status:"inactive" });
 
-  await sendUserRegisterMail(user, req.body.password);
-  // if (req.body.mobile) {
-  //   let data = { email: user.email, password: req.body.password };
-  //   let userRegister = formatter(config.get("smsc.userRegister"), data);
-  //   console.log("otp", userRegister);
-  //   const result = await sendSms(userRegister, req.body.mobile);
-  //   if (config.get("sendSms") && result.code && result.code != 21408)
-  //     return res.status(400).send({
-  //       statusCode: 400,
-  //       message: "Failure",
-  //       data: "Invalid mobile number"
-  //     });
-  // }
+    //create salt for user password hash
+    const salt = await bcrypt.genSalt(10);
+
+    //hash password and replace user password with the hashed password
+    user.password = await bcrypt.hash(password, salt);
+
+    // save user to db
+    await user.save();
+
+    user.userId = user._id;
+  
+    let result = _.pick(user, ["userId", "role", "firstName", "lastName", "phone", "email", "status"]);
+    
+    // await sendUserVerificationEmail(user.email);
+
+    return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
+    
+  } catch (err) {
+    console.error(err.message);
+    return response.error(res, err.message, 500);
+  }
+
 });
 
 // Update existing user
@@ -208,11 +211,11 @@ router.put("/", userAuth, async (req, res) => {
       return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.EMAIL_ALREADY_EXISTS });
     user.email = req.body.email;
   }
-  if (req.body.mobile && req.body.mobile != user.mobile) {
-    tempUser = await User.findOne({ mobile: req.body.mobile });
+  if (req.body.phone && req.body.phone != user.phone) {
+    tempUser = await User.findOne({ phone: req.body.phone });
     if (tempUser)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.MOBILE_ALREADY_EXISTS });
-    user.mobile = req.body.mobile;
+      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.PHONE_ALREADY_EXISTS });
+    user.phone = req.body.phone;
   }
 
   if (req.jwtData.role == "user") {
@@ -224,12 +227,12 @@ router.put("/", userAuth, async (req, res) => {
   await user.save();
   user.userId = user._id;
 
-  let response = _.pick(user, ["userId", "fullName", "mobile", "email", "address", "status"]);
+  let response = _.pick(user, ["userId", "fullName", "phone", "email", "address", "status"]);
 
   res.send({ statusCode: 200, message: "Success", data: response });
 });
 
-//verify email or mobile
+//verify email or phone
 router.post("/verify", async (req, res) => {
   let criteria = {};
   let email;
@@ -237,25 +240,25 @@ router.post("/verify", async (req, res) => {
     email = req.body.email.toLowerCase() || "NMB";
     criteria.email = email;
   }
-  if (req.body.mobile) {
-    criteria.mobile = req.body.mobile;
+  if (req.body.phone) {
+    criteria.phone = req.body.phone;
   }
-  if (req.body.email && req.body.mobile) {
-    criteria = { $or: [{ email: email }, { mobile: req.body.mobile }] };
+  if (req.body.email && req.body.phone) {
+    criteria = { $or: [{ email: email }, { phone: req.body.phone }] };
   }
 
   let user = await User.findOne(criteria);
   if (user) {
-    if (email == user.email && req.body.mobile == user.mobile) {
+    if (email == user.email && req.body.phone == user.phone) {
       return res
         .status(400)
-        .send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.MOBILE_EMAIL_ALREADY_EXISTS });
+        .send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.phone_EMAIL_ALREADY_EXISTS });
     }
     if (email === user.email)
       return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.EMAIL_ALREADY_EXISTS });
 
-    if (req.body.mobile === user.mobile)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.MOBILE_ALREADY_EXISTS });
+    if (req.body.phone === user.phone)
+      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.phone_ALREADY_EXISTS });
   }
   return res.send({ statusCode: 200, message: "Success", data: USER_CONSTANTS.VERIFICATION_SUCCESS });
 });
@@ -263,28 +266,26 @@ router.post("/verify", async (req, res) => {
 // User login api
 router.post("/login", async (req, res) => {
   const { error } = validateUserLogin(req.body);
-  if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+  if (error) return response.validationErrors(res, error.details[0].message);
 
   let criteria = {};
   if (req.body.email && req.body.email != "") criteria.email = req.body.email.toLowerCase();
 
   let user = await User.findOne(criteria);
   if (!user) {
-    return res.status(400).send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INVALID_CREDENTIALS });
+    return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
   }
 
-  if (user.status != "active")
-    return res
-      .status(400)
-      .send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INACTIVE_ACCOUNT, status: user.status });
+  if (user.status != "active") return response.error(res, AUTH_CONSTANTS.INACTIVE_ACCOUNT);
+    
 
   const validPassword = await bcrypt.compare(req.body.password, user.password);
-  if (!validPassword)
-    return res.status(400).send({ statusCode: 400, message: "Failure", data: AUTH_CONSTANTS.INVALID_CREDENTIALS });
+  if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
 
   const token = user.generateAuthToken();
   user.accessToken = token;
   user.lastLogin = Math.round(new Date() / 1000);
+  user.lastLogin = new Date();
   await user.save();
   user.userId = user._id;
 
@@ -294,22 +295,21 @@ router.post("/login", async (req, res) => {
     user.permissions = roleData.permissions;
   }
 
-  let response = _.pick(user, [
+  let details = _.pick(user, [
     "userId",
     "role",
     "permissions",
     "fullName",
-    "mobile",
+    "phone",
     "email",
     "status",
     "stateName",
     "stateCode",
     "stateId",
     "profilePic",
-    "insertDate",
+    "lastLogin",
   ]);
-
-  res.header("Authorization", token).send({ statusCode: 200, message: "Success", data: response });
+  return response.withData(res, {token: token, details: details, roles: user.role, permissions: user.permissions });
 });
 
 // user password change
@@ -353,7 +353,7 @@ async function logCurrentUserState(user) {
     userId: user._id.toString(),
     role: user.role,
     fullName: user.fullName,
-    mobile: user.mobile,
+    phone: user.phone,
     email: user.email,
     stateId: user.stateId,
     address: user.address,

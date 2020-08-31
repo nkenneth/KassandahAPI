@@ -47,10 +47,11 @@ const USER_CONSTANTS = {
   UPDATE_SUCCESS: "User updated successfully",
   SUBMIT_SUCCESS: "User added successfully",
   EMAIL_ALREADY_EXISTS: "Email already registered",
-  MOBILE_ALREADY_EXISTS: "Mobile number already registered",
+  PHONE_ALREADY_EXISTS: "Phone number already registered",
   MOBILE_EMAIL_ALREADY_EXISTS: "Mobile and Email both already registered",
   ALL_CHECKS_VALID: "All check are valid",
   VERIFICATION_SUCCESS: "Verification success",
+  VERIFICATION_EMAIL_SENT: "Please confirm yourself by clicking on verify user button sent to your email"
 };
 
 

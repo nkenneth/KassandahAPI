@@ -5,6 +5,7 @@ const mongoose = require("mongoose");
 const { Admin } = require("../models/admin");
 const { User } = require("../models/user");
 const { ApiLog } = require("../models/apiLog");
+const response = require("../services/response");
 
 
 function test(tempObj) {
@@ -19,27 +20,31 @@ adminAuth = async function (req, res, next) {
 
   let reqUserId = "";
   const token = req.header("Authorization");
-  if (!token)
-    return res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED });
+  if (!token) 
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
+    
 
   try {
     const decoded = jwt.verify(token, config.get("jwtPrivateKey"));
     req.jwtData = decoded;
 
     if (decoded.role !== "admin")
-      return res.status(403).send({ statusCode: 403, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN });
+      return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN, 403);
+
 
     let admin = await Admin.findOne({ _id: mongoose.Types.ObjectId(decoded.userId) });
     // if (!admin || (user && user.accessToken !== token))
     if (!admin)
-      return res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED });
+      return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
+
     reqUserId = decoded.userId;
 
     await logApis(req.method, reqUserId, req.baseUrl + req.url, req.jwtData.email, req.jwtData.role, req.jwtData.subrole || "NA", req.body);
 
     next();
+
   } catch (ex) {
-    res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.INVALID_AUTH_TOKEN });
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
   }
 };
 
@@ -49,18 +54,19 @@ userAuth = async function (req, res, next) {
   let reqUserId = "";
   const token = req.header("Authorization");
   if (!token)
-    return res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED });
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
 
   try {
     const decoded = jwt.verify(token, config.get("jwtPrivateKey"));
     req.jwtData = decoded;
 
     if (decoded.role !== "user")
-      return res.status(403).send({ statusCode: 403, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN });
+      return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN, 403);
 
     let user = await User.findOne({ _id: mongoose.Types.ObjectId(decoded.userId) });
     if (!user || (user && user.accessToken !== token))
-      return res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED });
+      return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
+  
     req.userData = user;
     reqUserId = decoded.userId;
 
@@ -68,7 +74,7 @@ userAuth = async function (req, res, next) {
 
     next();
   } catch (ex) {
-    res.status(401).send({ statusCode: 401, message: "Failure", data: MIDDLEWARE_AUTH_CONSTANTS.INVALID_AUTH_TOKEN });
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
   }
 };
 
