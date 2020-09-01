@@ -17,7 +17,8 @@ const {
   validateResetAdminPassword,
 } = require("../models/user");
 const { Role } = require("../models/role");
-const { sendUserRegisterMail } = require("../services/amazonSes");
+// const { sendUserRegisterMail } = require("../services/amazonSes");
+const { sendUserVerificationMail } = require("../services/amazonSes");
 //const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
@@ -174,7 +175,7 @@ router.post("/", async (req, res) => {
   
     let result = _.pick(user, ["userId", "roleId", "firstName", "lastName", "phone", "email", "status"]);
     
-    // await sendUserVerificationEmail(user.email);
+    await sendUserVerificationMail(user.email, user.firstName, "https://gigpayflow.com/verification?token=asflasfdjalksfhahfaksjfdhkjs");
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     
