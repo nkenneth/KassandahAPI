@@ -2,72 +2,34 @@ const { ROLE_CONSTANTS } = require("../config/constant");
 const mongoose = require("mongoose");
 const config = require("config");
 const express = require("express");
+const response = require("../services/response");
 const router = express.Router();
 const { Role, RoleAudit, validateRolePost } = require("../models/role");
-const { userAuth } = require("../middleware/auth");
+const { adminAuth } = require("../middleware/auth");
+
+
+// Get  Single Role
+router.get("/:id", async (req, res) => {
+    const { id } = req.params;
+    role = await Role.findById(id);
+    console.log(role);
+    return response.withData(res, role);
+});
+
+
 
 // Get Role List
 router.get("/", async (req, res) => {
-    let criteria = {};
-
-    let roleList = await Role.aggregate([
-        { $match: { status: "active" } },
-        {
-            $project: {
-                _id: 0,
-                roleId: "$_id",
-                role: 1,
-                status: 1,
-                isState: 1,
-                permissions: 1,
-                isState: 1,
-                createdBy: 1,
-                modifiedBy: 1,
-                modifiedDate: 1,
-                insertDate: 1
-            }
-        }
-    ]);
-
-    return res.send({ statusCode: 200, message: "Success", data: { roleList } });
+    roleList = await Role.find({});
+    console.log(roleList);
+    return response.withData(res, roleList);
 });
 
-// Get Role Audit Log
-router.get("/auditLog/:roleId", async (req, res) => {
-    let criteria = {};
-    criteria.roleId = req.params.roleId;
-
-    var skipVal, limitVal;
-    if (isNaN(parseInt(req.query.offset))) skipVal = 0;
-    else skipVal = parseInt(req.query.offset);
-
-    if (isNaN(parseInt(req.query.limit))) limitVal = 100;
-    else limitVal = parseInt(req.query.limit);
-
-    let auditLog = await RoleAudit.aggregate([
-        { $match: criteria },
-        { $sort: { modifiedDate: -1 } },
-        {
-            $project: {
-                _id: 0,
-                role: 1,
-                isState: 1,
-                permissions: 1,
-                status: 1,
-                createdBy: 1,
-                modifiedBy: 1,
-                modifiedDate: 1
-            }
-        }
-    ]);
-
-    return res.send({ statusCode: 200, message: "Success", data: { auditLog } });
-});
 
 // Create a role
-router.post("/", userAuth, async (req, res) => {
+router.post("/", adminAuth, async (req, res) => {
     const { error } = validateRolePost(req.body);
-    if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+    if (error) return response.error(res, error.details[0].message); 
 
     let role = await Role.findOne({ role: req.body.role });
     if (role) {
@@ -84,15 +46,14 @@ router.post("/", userAuth, async (req, res) => {
 
     role = new Role();
     role.role = req.body.role;
-    role.isState = req.body.isState;
-    role.permissions = req.body.permissions;
     if (req.body.status)
         role.status = req.body.status;
 
     role.createdBy = req.jwtData.email;
     role.modifiedDate = Math.round(new Date() / 1000);
     await role.save();
-    return res.send({ statusCode: 200, status: "Success", data: ROLE_CONSTANTS.SUBMIT_SUCCESS });
+    return response.success(res, ROLE_CONSTANTS.SUBMIT_SUCCESS);
+    // return res.send({ statusCode: 200, status: "Success", data: ROLE_CONSTANTS.SUBMIT_SUCCESS });
 });
 
 async function logCurrentRoleState(role) {

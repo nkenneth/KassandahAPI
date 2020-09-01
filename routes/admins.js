@@ -1,4 +1,4 @@
-const { ADMIN_CONSTANTS } = require("../config/constant.js");
+const { ADMIN_CONSTANTS, AUTH_CONSTANTS } = require("../config/constant.js");
 const config = require("config");
 const Joi = require("joi");
 const mongoose = require("mongoose");
@@ -9,34 +9,38 @@ const { ApiLog } = require("../models/apiLog");
 const { adminAuth, test } = require("../middleware/auth");
 const express = require("express");
 const router = express.Router();
-const { User } = require("../models/user");
+const response = require("../services/response");
+const { User, validateChangePassword } = require("../models/user");
 
-// router.post("/login", async (req, res) => {
-//     const { error } = validateLogin(req.body);
-//     if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
+// admin password change
+router.post("/password/change", adminAuth, async (req, res) => {
 
-//     let email = req.body.email.toLowerCase();
+    const { error } = validateChangePassword(req.body);
+    if (error) return response.error(res, error.details[0].message); 
+  
+    let user = await User.findById(req.jwtData.userId);
+    if (!user) return response.error(res, AUTH_CONSTANTS.INVALID_USER);
+  
+    const { oldPassword, newPassword } = req.body;
 
-//     let admin = await Admin.findOne({ email: email });
-//     if (!admin)
-//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
+    const validPassword = await bcrypt.compare(oldPassword, user.password);
+    if (!validPassword)
+      return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
+  
+    //create salt for user password hash
+    const salt = await bcrypt.genSalt(10);
+  
+    //hash password and replace user password with the hashed password
+    let encryptPassword = await bcrypt.hash(newPassword, salt);
+  
+    user.password = encryptPassword;
+    await user.save();
+    return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS); 
 
-//     if (admin.status == "blocked")
-//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.BLOCKED_ACCOUNT });
+  });
 
-//     const validPassword = await bcrypt.compare(req.body.password, admin.password);
-//     if (!validPassword)
-//         return res.status(400).send({ statusCode: 400, message: "Failure", data: ADMIN_CONSTANTS.INVALID_EMAIL });
 
-//     const token = admin.generateAuthToken();
-//     admin.accessToken = token;
-//     admin.deviceToken = req.body.deviceToken;
 
-//     await admin.save();
-//     let response = _.pick(admin, ["email", "status", "createdAt", "_id"]);
-
-//     res.header("Authorization", token).send({ statusCode: 200, message: "Success", data: response });
-// });
 
 router.get("/apiLogs", test("taaaa"), async (req, res) => {
 
@@ -60,7 +64,8 @@ router.get("/apiLogs", test("taaaa"), async (req, res) => {
     if (req.query.url)
         criteria = { ...criteria, url: req.query.url }
 
-    console.log("criteria:", criteria)
+    console.log("criteria:", criteria);
+
     let apiList = await ApiLog.aggregate([
         { $match: criteria },
         { $sort: { insertDate: -1 } },
