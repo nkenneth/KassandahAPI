@@ -3,6 +3,7 @@ const config = require("config");
 const appVersions = require("../routes/appVersions");
 const admins = require("../routes/admins");
 const users = require("../routes/users");
+const tickets = require("../routes/tickets");
 const roles = require("../routes/roles");
 const webviews = require("../routes/webviews");
 const s3upload = require("../routes/s3upload");
@@ -15,6 +16,7 @@ module.exports = function (app) {
   app.use("/api/version", appVersions);
   app.use("/api/admin", admins);
   app.use("/api/user", users);
+  app.use("/api/ticket", tickets);
   app.use("/api/role", roles);
   app.use("/api/webview", webviews);
   app.use("/api/s3upload", s3upload);

@@ -54,6 +54,16 @@ const USER_CONSTANTS = {
   VERIFICATION_EMAIL_SENT: "Please confirm yourself by clicking on verify user button sent to your email"
 };
 
+//Ticket.js
+const TICKET_CONSTANTS = {
+  INVALID_TICKET: "Invalid Ticket Id",
+  DUPLICATE_TICKET: "Ticket already exist",
+  TICKET_ADDED: "Ticket added succesfully",
+  TICKET_DELETED: "Ticket deleted successfully",
+  TICKET_UPDATED: "Ticket updated successfully",
+  TICKET_EXPIRED: "Ticket expired",
+  TICKET_NOT_FOUND: "Ticket not found"
+}
 
 
 module.exports.SYSTEM_FAILURE = SYSTEM_FAILURE;
