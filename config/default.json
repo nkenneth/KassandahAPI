@@ -8,10 +8,11 @@
   "bcryptSalt": "$2b$10$oPd2gJERglqNiWXf3sYwIu",
   "PAYSTACK_SECRET_KEY": "sk_test_09b32040c6d55fb5b242ee2c87f6b87833cc5177",
   "PAYSTACK_URL": "https://api.paystack.co",
-  "S3_SECRET_KEY": "J6zCe9EGYU+uYa5To/CBtvEf3H0O+/WyVsOx1+7q",
-  "S3_ACCESS_KEY": "AKIA3RQMV2JDQRDEV2CL",
-  "S3_BUCKET_REGION": "us-east-1",
-  "S3_BUCKET_NAME": "helpwantedapp",
   "logo": "https://temo.com",
-  "app_domain": "https://temo.com"
+  "app_domain": "https://temo.com",
+  "S3_ACCESS_KEY": "AKIARDEE2LJX4ESMU656",
+  "S3_SECRET_KEY": "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",
+  "S3_BUCKET_REGION": "us-east-2",
+  "S3_BUCKET_NAME": "gigpap"
+
 }

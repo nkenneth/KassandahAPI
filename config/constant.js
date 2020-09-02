@@ -50,7 +50,9 @@ const USER_CONSTANTS = {
   PHONE_ALREADY_EXISTS: "Phone number already registered",
   MOBILE_EMAIL_ALREADY_EXISTS: "Mobile and Email both already registered",
   ALL_CHECKS_VALID: "All check are valid",
-  VERIFICATION_SUCCESS: "Verification success",
+  VERIFICATION_SUCCESS: "Verification success. Please log in.",
+  VERIFICATION_FAILURE: "We were unable to find a valid token. Your token may have expired.",
+  USER_ALREADY_VERIFIED: "This user has already been verified.",
   VERIFICATION_EMAIL_SENT: "Please confirm yourself by clicking on verify user button sent to your email"
 };
 
