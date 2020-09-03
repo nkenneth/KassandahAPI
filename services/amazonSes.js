@@ -4,6 +4,7 @@ const winston = require("winston");
 const {
   verifyotp,
   verifyEmailHtml,
+  resetYourPasswordHtml,
   approvalEmail,
   welcomeOnboard,
   rejectionMail,
@@ -58,11 +59,46 @@ async function sendOtpMail(email, username, otp) {
 }
 
 
-async function sendUserVerificationMail(email, username, otp) {
-  // if (username) text = `Hey ${username}, your OTP is ${otp}.`;
+async function sendResetPasswordMail(email, username, token) {
   let data = {
     name: username,
-    otp: otp,
+    token: token,
+  };
+  const temp = formatter(resetYourPasswordHtml, data);
+  const msg = {
+    Destination: {
+      ToAddresses: [email], // Email address/addresses that you want to send your email
+    },
+    Message: {
+      Body: {
+        Html: {
+          // HTML Format of the email
+          Charset: "UTF-8",
+          Data: temp,
+        },
+      },
+      Subject: {
+        Charset: "UTF-8",
+        Data: "Reset your password",
+      },
+    },
+    Source: "anselm.mba@thegiggroupng.com",
+    // Source: config.get("email.senderId"),
+  };
+  try {
+    const result = await ses.sendEmail(msg).promise();
+    winston.info(`Sending of Email to ${email} success with status code: ${result.MessageId}.`);
+    return { MessageId: result.MessageId };
+  } catch (Ex) {
+    winston.error(`Sending of Email failed for ${email} with errorcode: ${Ex.code}: ${Ex.message}.`);
+    return { code: Ex.code, message: Ex.message };
+  }
+}
+
+async function sendUserVerificationMail(email, username, token) {
+  let data = {
+    name: username,
+    token: token,
   };
   const temp = formatter(verifyEmailHtml, data);
   const msg = {
@@ -267,6 +303,7 @@ async function send() {
 
 module.exports.sendOtpMail = sendOtpMail;
 module.exports.sendUserVerificationMail = sendUserVerificationMail;
+module.exports.sendResetPasswordMail = sendResetPasswordMail;
 module.exports.sendApprovalMail = sendApprovalMail;
 module.exports.sendOnboardingMail = sendOnboardingMail;
 module.exports.sendRejectionMail = sendRejectionMail;

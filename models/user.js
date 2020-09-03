@@ -13,6 +13,8 @@ const UserSchema = new mongoose.Schema({
     phone: { type: String, default: "", required: true, unique: true },
     email: { type: String, default: "", required: true, unique: true },
     password: { type: String, default: "" },
+    resetPasswordToken: { type: String },
+    resetPasswordExpires: { type: Date },
     isVerified: { type: Boolean, default: false },
     accessToken: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive", "blocked"], default: "inactive" },
@@ -93,27 +95,28 @@ function validateUserListGet(user) {
 
 function validateUserLogin(rso) {
     const schema = {
-        email: Joi.string().min(1).max(200),
-        password: Joi.string().min(1).max(200),
+        email: Joi.string().min(6).max(200).required(),
+        password: Joi.string().min(6).max(200).required(),
     };
     return Joi.validate(rso, schema);
 }
 
-function validateChangePassword(rso) {
+function validateChangePassword(user) {
     const schema = {
         oldPassword: Joi.string().min(1).max(200).required(),
         newPassword: Joi.string().min(1).max(200).required(),
     };
-    return Joi.validate(rso, schema);
+    return Joi.validate(user, schema);
 }
 
-function validateResetAdminPassword(rso) {
+function validateResetPassword(user) {
     const schema = {
-        rsoId: Joi.string().min(5).max(100).required(),
-        newPassword: Joi.string().min(5).max(255).required()
+        newPassword: Joi.string().min(6).max(200).required(),
+        confirmNewPassword: Joi.string().min(6).max(200).required()
     };
-    return Joi.validate(rso, schema);
+    return Joi.validate(user, schema);
 }
+
 
 module.exports.User = User;
 module.exports.UserAudit = UserAudit;
@@ -123,4 +126,4 @@ module.exports.validateEmail = validateEmail;
 module.exports.validateUserListGet = validateUserListGet;
 module.exports.validateUserLogin = validateUserLogin;
 module.exports.validateChangePassword = validateChangePassword;
-module.exports.validateResetAdminPassword = validateResetAdminPassword;
+module.exports.validateResetPassword = validateResetPassword;

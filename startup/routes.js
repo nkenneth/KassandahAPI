@@ -16,7 +16,7 @@ module.exports = function (app) {
   app.use("/api/version", appVersions);
   app.use("/api/admin", admins);
   app.use("/api/user", users);
-  app.use("/api/ticket", tickets);
+  // app.use("/api/ticket", tickets);
   app.use("/api/role", roles);
   app.use("/api/webview", webviews);
   app.use("/api/s3upload", s3upload);
