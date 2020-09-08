@@ -100,12 +100,12 @@ router.post("/", async (req, res) =>{
     await ticket.save();
     let result = _.pick(ticket, ["reference","userId", "phaseId", "workflowId", "categoryId", "Status", "description", "vendor", "numberOfItems", "items", "dueDate", "document", "amount"])
 
-//     return response.success(res, TICKET_CONSTANT.TICKET_ADDED);
-//   } catch (error) {
-//     console.error(err.message);
-//     return response.error(res, err.message, 500);
-//   }
+    return response.success(res, TICKET_CONSTANT.TICKET_ADDED);
+  } catch (error) {
+    console.error(err.message);
+    return response.error(res, err.message, 500);
+  }
 
-})
+});
 
 module.exports = router
