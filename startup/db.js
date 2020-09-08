@@ -4,5 +4,5 @@ const config = require("config");
 
 module.exports = function() {
   const db = config.get("dbMlab");
-  mongoose.connect(db).then(() => winston.info(`Connected to ${db}...`));
+  mongoose.connect(db, { useNewUrlParser: true }).then(() => winston.info(`Connected to ${db}...`));
 };

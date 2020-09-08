@@ -24,10 +24,7 @@ const UserSchema = new mongoose.Schema({
     // lastLogin: Number,
 }, {timestamps: true});
 
-
-
 const User = mongoose.model("User", UserSchema);
-
 
 const userAuditSchema = new mongoose.Schema({
     userId: String,
