@@ -1,7 +1,7 @@
 const mongoose = require("mongoose")
 
 const WorkflowSchema = new mongoose.Schema({
-    name: {type: string, default:""},
+    name: {type: String, default:""},
     userId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
     phaseId: { type: mongoose.Schema.Types.ObjectId, ref: "phase", required: true },
 })

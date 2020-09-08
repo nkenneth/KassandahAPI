@@ -22,7 +22,7 @@ mongoose.set("debug", true);
 
 //Get Ticket
 
-router.get("/", userAuth, async, (req, res)=>{
+router.get("/", userAuth, async (req, res)=>{
     let ticket = {};
     var skipVal, limitVal;
   if (isNaN(parseInt(req.query.offset))) skipVal = 0;
@@ -32,9 +32,9 @@ router.get("/", userAuth, async, (req, res)=>{
   else limitVal = parseInt(req.query.limit);
 
   
-  if (req.query.name) {
-    var regexName = new RegExp(req.query.name, "i");
-    ticket.name = regexName;
+  if (req.query.reference) {
+    var regexName = new RegExp(req.query.reference, "i");
+    ticket.reference = regexName;
   }
   if(req.query.userId) ticket.userId = req.query.userId
   if(req.query.categoryId) ticket.categoryId = req.query.categoryId
@@ -53,12 +53,12 @@ router.get("/", userAuth, async, (req, res)=>{
     { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
     { $project : {
         _id:0,
-        name: 1,
+        reference: 1,
         code: 1,
         user: { $arrayElemAt: [ "$userData.firstname", 0] },
-        workflow: { $arrayElemAt: ["$workflowData.name", 0] },
-        phase: { $arrayElemAt: [ "$phaseData.name", 0] },
-        category: { $arrayElemAt: [ "$categoryData.name", 0] },
+        workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
+        phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
+        category: { $arrayElemAt: [ "$categoryData.reference", 0] },
         userId: 1,
         workflowid: 1,
         phaseId: 1,
@@ -73,32 +73,32 @@ router.get("/", userAuth, async, (req, res)=>{
 
 // Create Ticket
 
-router.post("/", async, (req, res) =>{
+router.post("/", async (req, res) =>{
     const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
   let ticket = await Ticket.findOne({
-    $or: [{ name: req.body.name.toLowerCase() }, { code: req.body.code }],
+    $or: [{ reference: req.body.reference.toLowerCase() }, { code: req.body.code }],
   });
 
   if (ticket) {
-    if (req.body.name === ticket.name)
+    if (req.body.reference === ticket.reference)
       return response.error(res, TICKET_CONSTANT.DUPLICATE_TICKET, 400);
   }
 
-  const name = req.body.name.toLowerCase();
-  const { name, userId, phaseId, categoryId, workflowId } = req.body;
+  const reference = req.body.reference.toLowerCase();
+  const {  userId, phaseId, categoryId, workflowId,  description, vendor, numberOfItems, items, dueDate, document, amount } = req.body;
 
-  console.log( { name, userId, phaseId, categoryId, workflowId } );
+  console.log( { reference, userId, phaseId, categoryId, workflowId, description, vendor, numberOfItems, items, dueDate, document, amount } );
   //Generate Ticket Code
   const code = getRandomString(7)
   try {
       //Instatiate Ticket entity
-      ticket = new Ticket({ name, code, phaseId, userId, workflowId, categoryId, status:"Open"})
+      ticket = new Ticket({ reference, code, phaseId, userId, workflowId, categoryId, status:"Open", description, vendor, numberOfItems, items, dueDate, document, amount})
 
       
     // save user to db
     await ticket.save();
-    let result = _.pick(ticket, ["name","userId", "phaseId", "workflowId", "categoryId", "Status"])
+    let result = _.pick(ticket, ["reference","userId", "phaseId", "workflowId", "categoryId", "Status", "description", "vendor", "numberOfItems", "items", "dueDate", "document", "amount"])
 
     return response.success(res, TICKET_CONSTANT.TICKET_ADDED);
   } catch (error) {
@@ -107,3 +107,5 @@ router.post("/", async, (req, res) =>{
   }
 
 })
+
+module.exports = router
