@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const config = require("config");
 const bcrypt = require("bcrypt");
+const crypto = require("crypto");
 const response = require("../services/response");
 const _ = require("lodash");
 const express = require("express");
@@ -12,12 +13,16 @@ const {
   UserAudit,
   validateUserPost,
   validateUserPut,
+  validateEmail,
   validateUserLogin,
   validateChangePassword,
-  validateResetAdminPassword,
+  validateResetPassword,
 } = require("../models/user");
 const { Role } = require("../models/role");
-const { sendUserRegisterMail } = require("../services/amazonSes");
+const { Token } = require("../models/emailverificationtoken.js");
+// const { sendUserRegisterMail } = require("../services/amazonSes");
+const { sendUserVerificationMail } = require("../services/amazonSes");
+const { sendResetPasswordMail } = require("../services/amazonSes");
 //const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
@@ -170,11 +175,15 @@ router.post("/", async (req, res) => {
     // save user to db
     await user.save();
 
-    user.userId = user._id;
-  
-    let result = _.pick(user, ["userId", "roleId", "firstName", "lastName", "phone", "email", "status"]);
-    
-    // await sendUserVerificationEmail(user.email);
+    // Create a verification token for this user
+    var token = new Token({ _userId: user._id, token: crypto.randomBytes(16).toString('hex') });
+
+    // Save the verification token
+    token.save(function (err) {
+        if (err) return response.error(res, err.message, 500); 
+    });
+
+    await sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     
@@ -232,36 +241,65 @@ router.put("/", userAuth, async (req, res) => {
   res.send({ statusCode: 200, message: "Success", data: response });
 });
 
-//verify email or phone
-router.post("/verify", async (req, res) => {
-  let criteria = {};
-  let email;
-  if (req.body.email) {
-    email = req.body.email.toLowerCase() || "NMB";
-    criteria.email = email;
-  }
-  if (req.body.phone) {
-    criteria.phone = req.body.phone;
-  }
-  if (req.body.email && req.body.phone) {
-    criteria = { $or: [{ email: email }, { phone: req.body.phone }] };
-  }
+//verify email
+router.get("/verify/:token", async (req, res) => {
+  
+  const { token } = req.params; 
+  if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  console.log("token isssss:::::" + token);
 
-  let user = await User.findOne(criteria);
-  if (user) {
-    if (email == user.email && req.body.phone == user.phone) {
-      return res
-        .status(400)
-        .send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.phone_EMAIL_ALREADY_EXISTS });
-    }
-    if (email === user.email)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.EMAIL_ALREADY_EXISTS });
+  // Find a matching token
+  Token.findOne({ token }, function (err, token) {
+    if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+    
+    // If we found a token, find a matching user
+    User.findOne({ _id: token._userId }, function (err, user) {
+        if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
+        if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
 
-    if (req.body.phone === user.phone)
-      return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.phone_ALREADY_EXISTS });
-  }
-  return res.send({ statusCode: 200, message: "Success", data: USER_CONSTANTS.VERIFICATION_SUCCESS });
+        // Verify and save the user
+        user.isVerified = true;
+        user.status = "active";
+        user.save(function (err) {
+            if (err) { return response.error(res, err.message); }
+            return response.success(res, USER_CONSTANTS.VERIFICATION_SUCCESS);
+        });
+    });
+  });
 });
+
+
+
+//resend verify email
+router.post("/resend", async (req, res) => {
+ 
+  // Check for validation errors    
+  const { error } = validateEmail(req.body);
+  if (error) return response.validationErrors(res, error.details[0].message);
+
+  const { email } = req.body; 
+  console.log("email isssss:::::" + email);
+
+  const user = await User.findOne({email});
+  if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+  if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+
+  // Create a verification token for this user
+  var token = new Token({ _userId: user._id, token: crypto.randomBytes(16).toString('hex') });
+
+  // Save the verification token
+  token.save(function (err) {
+      if (err) return response.error(res, err.message, 500); 
+  });
+
+  await sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+
+  return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
+
+});
+
+
+
 
 // User login api
 router.post("/login", async (req, res) => {
@@ -276,6 +314,8 @@ router.post("/login", async (req, res) => {
   if (!user) {
     return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
   }
+
+  if (!user.isVerified) return response.error(res, USER_CONSTANTS.NOT_YET_VERIFIED);
 
   if (user.status != "active") return response.error(res, AUTH_CONSTANTS.INACTIVE_ACCOUNT);
     
@@ -295,6 +335,7 @@ router.post("/login", async (req, res) => {
     config.get("jwtPrivateKey")
   );
 
+  
 
   user.accessToken = token;
   user.lastLogin = new Date();
@@ -346,21 +387,76 @@ router.post("/password/change", userAuth, async (req, res) => {
 
 });
 
-router.post("/password/reset/", async (req, res) => {
-  const { error } = validateResetAdminPassword(req.body);
-  if (error) return response.error(res, error.details[0].message); 
+router.post("/password/forgot", async (req, res) => {
 
-  let user = await User.findById(req.body.userId);
-  if (!user)
-    return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS); 
+  // Check for validation errors    
+  const { error } = validateEmail(req.body);
+  if (error) return response.validationErrors(res, error.details[0].message);
 
-  var encryptPassword = await bcrypt.hash(req.body.newPassword, config.get("bcryptSalt"));
-  user.password = encryptPassword;
+  const { email } = req.body; 
+  console.log("email isssss:::::" + email);
 
-  await User.updateOne({ _id: user._id }, { $set: { lastPasswords: user.lastPasswords, password: user.password } });
-  res.send({ statusCode: 200, message: "Success", data: AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS });
+  const user = await User.findOne({email});
+  if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
-  // SEND EMAIL
+  const resetToken = crypto.randomBytes(20).toString('hex');
+  user.resetPasswordToken = resetToken;
+  user.resetPasswordExpires = Date.now() + 3600000; //expires in an hour
+  user.save(function (err) {
+    if (err) return response.error(res, err.message, 500); 
+  });
+
+  await sendResetPasswordMail(user.email, user.firstName, `http://${req.headers.host}/api/user/password/forgot/${resetToken}`);
+
+  return response.success(res, USER_CONSTANTS.RESET_PASSWORD_EMAIL_SENT); 
+
+});
+
+router.get("/password/forgot/:token", async (req, res) => {
+
+  const { token } = req.params; 
+
+  // Find a matching token
+  user = await User.findOne({resetPasswordToken: token, resetPasswordExpires: {$gt: Date.now()}});
+  if(!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+  // res.redirect('http://frontend_form_url');
+  return response.success(res, "Waiting for frontend to provide a password form url to redirect to");
+
+});
+
+
+router.post("/password/reset/:token", async (req, res) => {
+
+  const { error } = validateResetPassword(req.body);
+  if (error) return response.error(res, error.details[0].message);
+
+  const { newPassword, confirmNewPassword } = req.body;
+
+  if(newPassword !== confirmNewPassword) return response.error(res, USER_CONSTANTS.PASSWORD_MISMATCH);
+
+  try {
+    user = await User.findOne({resetPasswordToken: req.params.token, resetPasswordExpires: {$gt: Date.now()}});
+    if(!user) return response.success(res, USER_CONSTANTS.INVALID_USER);
+
+    //create salt for user password hash
+    const salt = await bcrypt.genSalt(10);
+
+    //hash password and replace user password with the hashed password
+    user.password = await bcrypt.hash(newPassword, salt);
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
+    // save user to db
+    await user.save();
+    
+    return response.success(res, USER_CONSTANTS.PASSWORD_CHANGE_SUCCESS);
+
+  } catch (err) {
+    console.error(err.message);
+    return response.error(res, err.message, 500);
+  }
+
 });
 
 async function logCurrentUserState(user) {
