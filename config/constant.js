@@ -64,12 +64,28 @@ const USER_CONSTANTS = {
 const TICKET_CONSTANTS = {
   INVALID_TICKET: "Invalid Ticket Id",
   DUPLICATE_TICKET: "Ticket already exist",
-  TICKET_ADDED: "Ticket added succesfully",
+  POSSIBLE_DUPLICATE_TICKET: "Please double check this ticket may already exist",
+  TICKET_CREATED: "Ticket created succesfully",
   TICKET_DELETED: "Ticket deleted successfully",
   TICKET_UPDATED: "Ticket updated successfully",
   TICKET_EXPIRED: "Ticket expired",
   TICKET_NOT_FOUND: "Ticket not found"
-}
+};
+
+const CATEGORY_CONSTANTS = {
+  CATEGORY_EXISTS: "Category exists",
+  CATEGORY_CREATED: "Category created successfully"
+};
+
+const DEPARTMENT_CONSTANTS = {
+  DEPARTMENT_EXISTS: "Department exists",
+  DEPARTMENT_CREATED: "Department created successfully"
+};
+
+const VENDOR_CONSTANTS = {
+  VENDOR_EXISTS: "Vendor exists",
+  VENDOR_CREATED: "Vendor created successfully"
+};
 
 
 module.exports.SYSTEM_FAILURE = SYSTEM_FAILURE;
@@ -79,3 +95,7 @@ module.exports.ADMIN_CONSTANTS = ADMIN_CONSTANTS;
 module.exports.VERSION_CONSTANT = VERSION_CONSTANT;
 module.exports.ROLE_CONSTANTS = ROLE_CONSTANTS;
 module.exports.USER_CONSTANTS = USER_CONSTANTS;
+module.exports.TICKET_CONSTANTS = TICKET_CONSTANTS;
+module.exports.CATEGORY_CONSTANTS = CATEGORY_CONSTANTS;
+module.exports.DEPARTMENT_CONSTANTS = DEPARTMENT_CONSTANTS;
+module.exports.VENDOR_CONSTANTS = VENDOR_CONSTANTS;

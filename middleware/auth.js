@@ -19,14 +19,16 @@ adminAuth = async function (req, res, next) {
   if (!config.get("requiresAuth")) return next();
 
   let reqUserId = "";
-  const token = req.header("Authorization");
+  // const token = req.header("Authorization");
+  const token = req.headers.authorization.split(' ')[1];
 
   if (!token) 
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
     
-  
   try {
+    
     const decoded = jwt.verify(token, config.get("jwtPrivateKey"));
+
     req.jwtData = decoded;
 
     if (decoded.role !== "admin")
@@ -46,7 +48,8 @@ adminAuth = async function (req, res, next) {
     next();
 
   } catch (ex) {
-    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
+    return response.error(res, ex, 401);
+    // return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
   }
 };
 
@@ -54,8 +57,11 @@ userAuth = async function (req, res, next) {
   if (!config.get("requiresAuth")) return next();
 
   let reqUserId = "";
-  const token = req.header("Authorization");
+  
+  // const token = req.header("Authorization");
+  const token = req.headers.authorization.split(' ')[1];
   console.log(token);
+
   if (!token)
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
 

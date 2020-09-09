@@ -14,7 +14,6 @@ const { User, validateChangePassword } = require("../models/user");
 
 // admin password change
 router.post("/password/change", adminAuth, async (req, res) => {
-
     const { error } = validateChangePassword(req.body);
     if (error) return response.error(res, error.details[0].message); 
   
@@ -36,7 +35,6 @@ router.post("/password/change", adminAuth, async (req, res) => {
     user.password = encryptPassword;
     await user.save();
     return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS); 
-
   });
 
 
