@@ -4,7 +4,7 @@ const config = require("config");
 const express = require("express");
 const response = require("../services/response");
 const router = express.Router();
-const { Category, validateCategoryPost } = require("../models/category");
+const { Category, validateCategoryPost, validateCategoryPatch } = require("../models/category");
 const { adminAuth } = require("../middleware/auth");
 
 
@@ -57,6 +57,41 @@ router.post("/", adminAuth, async (req, res) => {
         return response.error(res, error.message);
     }
     
+});
+
+
+// Update a category
+router.patch("/:id", adminAuth, async (req, res) => {
+    const { error } = validateCategoryPatch(req.body);
+    if (error) return response.error(res, error.details[0].message); 
+    const { id } = req.params;
+    const { name } = req.body;
+
+    try {
+        let categoryExists = await Category.findById(id);
+        if (!categoryExists) return response.error(res, CATEGORY_CONSTANTS.CATEGORY_NOT_FOUND);
+
+        category = await Category.updateOne({ name });
+        return response.success(res, CATEGORY_CONSTANTS.CATEGORY_UPDATED);
+
+    } catch (error) {
+        return response.error(res, error.message);
+    }
+    
+});
+
+
+router.delete("/:id", adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        let categoryExists = await Category.findById(id);
+        if (!categoryExists) return response.error(res, CATEGORY_CONSTANTS.CATEGORY_NOT_FOUND);
+
+        category = await Category.deleteOne({ _id: id });
+        return response.success(res, CATEGORY_CONSTANTS.CATEGORY_DELETED);
+    } catch (error) {
+        return response.error(res, error.message);
+    }
 });
 
 

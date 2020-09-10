@@ -4,17 +4,17 @@ const config = require("config");
 const express = require("express");
 const response = require("../services/response");
 const router = express.Router();
-const { Vendor, validateVendorPost } = require("../models/vendor");
+const { Vendor, validateVendorPost, validateVendorPatch } = require("../models/vendor");
 const { adminAuth } = require("../middleware/auth");
 
 
-// Get  Single Category
+// Get  Single Vendor
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        category = await Category.findById(id);
-        console.log(category);
-        return response.withData(res, category);
+        vendor = await Vendor.findById(id);
+        console.log(vendor);
+        return response.withData(res, vendor);
     } catch (error) {
         return response.error(res, error.message);
     }
@@ -23,13 +23,13 @@ router.get("/:id", async (req, res) => {
 
 
 
-// Get Category List
+// Get Vendor List
 router.get("/", async (req, res) => {
 
     try {
-        categoryList = await Category.find({});
-        console.log(categoryList);
-        return response.withData(res, categoryList);
+        vendorList = await Vendor.find({});
+        console.log(vendorList);
+        return response.withData(res, vendorList);
     } catch (error) {
         return response.error(res, error.message);
     }
@@ -37,26 +37,63 @@ router.get("/", async (req, res) => {
 });
 
 
-// Create category
+// Create vendor
 router.post("/", adminAuth, async (req, res) => {
-    const { error } = validateCategoryPost(req.body);
+    const { error } = validateVendorPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name } = req.body;
+    const { name, address, state, email, phone } = req.body;
 
     try {
-        let categoryExists = await Category.findOne({ name });
-        if (categoryExists) {
-            return response.error(res, CATEGORY_CONSTANTS.CATEGORY_EXISTS);
+        let vendorExists = await Vendor.findOne({ $or: [{ name }, {email}, {phone}]  });
+        if (vendorExists) {
+            return response.error(res, VENDOR_CONSTANTS.VENDOR_EXISTS);
         }
 
-        category = await Category.create({ name });
-        return response.success(res, CATEGORY_CONSTANTS.CATEGORY_CREATED);
+        vendor = await Vendor.create({ name, address, state, email, phone });
+        return response.success(res, VENDOR_CONSTANTS.VENDOR_CREATED);
 
     } catch (error) {
         return response.error(res, error.message);
     }
     
+});
+
+
+// Update a vendor
+router.patch("/:id", adminAuth, async (req, res) => {
+    const { error } = validateVendorPatch(req.body);
+    if (error) return response.error(res, error.details[0].message); 
+    
+    const { id } = req.params;
+    const { name } = req.body;
+
+    try {
+        let vendorExists = await Vendor.findById(id);
+        if (!vendorExists) return response.error(res, VENDOR_CONSTANTS.VENDOR_NOT_FOUND);
+
+        vendor = await Vendor.updateOne({ name });
+        return response.success(res, VENDOR_CONSTANTS.VENDOR_UPDATED);
+
+    } catch (error) {
+        return response.error(res, error.message);
+    }
+    
+});
+
+
+// Delete vendor
+router.delete("/:id", adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        let vendorExists = await Vendor.findById(id);
+        if (!vendorExists) return response.error(res, VENDOR_CONSTANTS.VENDOR_NOT_FOUND);
+
+        vendor = await Vendor.deleteOne({ _id: id });
+        return response.success(res, VENDOR_CONSTANTS.VENDOR_DELETED);
+    } catch (error) {
+        return response.error(res, error.message);
+    }
 });
 
 

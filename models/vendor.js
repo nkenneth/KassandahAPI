@@ -26,5 +26,19 @@ function validateVendorPost(vendor) {
 }
 
 
+function validateVendorPatch(vendor) {
+    const schema = {
+        name: Joi.string(),
+        address: Joi.string(),
+        state: Joi.string(),
+        email: Joi.string(),
+        phone: Joi.string()
+    };
+    
+    return Joi.validate(vendor, schema);
+}
+
+
 module.exports.Vendor = Vendor;
 module.exports.validateVendorPost = validateVendorPost;
+module.exports.validateVendorPatch = validateVendorPatch;

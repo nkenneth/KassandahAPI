@@ -20,6 +20,15 @@ function validateDepartmentPost(department) {
 }
 
 
+function validateDepartmentPatch(department) {
+    const schema = {
+        name: Joi.string(),
+        hod: Joi.string()
+    };
+    return Joi.validate(department, schema);
+}
+
 
 module.exports.Department = Department;
 module.exports.validateDepartmentPost = validateDepartmentPost;
+module.exports.validateDepartmentPatch = validateDepartmentPatch;

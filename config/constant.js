@@ -69,22 +69,31 @@ const TICKET_CONSTANTS = {
   TICKET_DELETED: "Ticket deleted successfully",
   TICKET_UPDATED: "Ticket updated successfully",
   TICKET_EXPIRED: "Ticket expired",
-  TICKET_NOT_FOUND: "Ticket not found"
+  TICKET_NOT_FOUND: "Ticket NOT found"
 };
 
 const CATEGORY_CONSTANTS = {
   CATEGORY_EXISTS: "Category exists",
-  CATEGORY_CREATED: "Category created successfully"
+  CATEGORY_CREATED: "Category created successfully",
+  CATEGORY_UPDATED: "Category updated successfully",
+  CATEGORY_DELETED: "Category deleted successfully",
+  CATEGORY_NOT_FOUND: "Category NOT found"
 };
 
 const DEPARTMENT_CONSTANTS = {
   DEPARTMENT_EXISTS: "Department exists",
-  DEPARTMENT_CREATED: "Department created successfully"
+  DEPARTMENT_CREATED: "Department created successfully",
+  DEPARTMENT_UPDATED: "Departmnt updated successfully",
+  DEPARTMENT_DELETED: "Department deleted successfully",
+  DEPARTMENT_NOT_FOUND: "Department NOT found"
 };
 
 const VENDOR_CONSTANTS = {
-  VENDOR_EXISTS: "Vendor exists",
-  VENDOR_CREATED: "Vendor created successfully"
+  VENDOR_EXISTS: "Vendor with same name, email or phone exists",
+  VENDOR_CREATED: "Vendor created successfully",
+  VENDOR_UPDATED: "Vendor updated successfully",
+  VENDOR_DELETED: "Vendor deleted successfully",
+  VENDOR_NOT_FOUND: "Vendor NOT found"
 };
 
 

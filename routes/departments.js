@@ -4,7 +4,7 @@ const config = require("config");
 const express = require("express");
 const response = require("../services/response");
 const router = express.Router();
-const { Department, validateDepartmentPost } = require("../models/department");
+const { Department, validateDepartmentPost, validateDepartmentPatch } = require("../models/department");
 const { adminAuth } = require("../middleware/auth");
 
 
@@ -58,6 +58,45 @@ router.post("/", adminAuth, async (req, res) => {
     }
     
 });
+
+
+
+
+// Update a department
+router.patch("/:id", adminAuth, async (req, res) => {
+    const { error } = validateDepartmentPatch(req.body);
+    if (error) return response.error(res, error.details[0].message); 
+
+    const { id } = req.params;
+    const { name, hod } = req.body;
+
+    try {
+        let departmentExists = await Department.findById(id);
+        if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
+
+        department = await Department.updateOne({ name, hod });
+        return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_UPDATED);
+
+    } catch (error) {
+        return response.error(res, error.message);
+    }
+    
+});
+
+
+router.delete("/:id", adminAuth, async (req, res) => {
+    const { id } = req.params;
+    try {
+        let departmentExists = await Department.findById(id);
+        if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_NOT_FOUND);
+
+        department = await Department.deleteOne({ _id: id });
+        return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_DELETED);
+    } catch (error) {
+        return response.error(res, error.message);
+    }
+});
+
 
 
 
