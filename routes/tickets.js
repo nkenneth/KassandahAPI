@@ -7,7 +7,7 @@ const express = require("express");
 const router = express.Router();
 const { Ticket, 
     validateTicketPost,
-    validateTicketPut,
+    validateTicketPatch,
     analyzeTicket} = require("../models/ticket");
 const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
@@ -31,10 +31,11 @@ router.post("/", userAuth, async (req, res) => {
   if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
   const userId = user._id;
   
-  const { categoryId, departmentId, vendorId, numberOfItems, items, description, dueDate, amount, workflowId } = req.body;
+  const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
 
   // mitigate duplicate ticket issuing
-  payload = analyzeTicket(categoryId, vendorId, amount, dueDate, ref);
+  payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
+
   if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
   
   switch (payload.score) {
@@ -44,37 +45,42 @@ router.post("/", userAuth, async (req, res) => {
     case 75:
       return response.error(res, TICKET_CONSTANTS.POSSIBLE_DUPLICATE_TICKET);
   
+    case 50:
+      user.isCheck = true;
+
     default:
       break;
   }
 
-  
-  //Generate Ticket Reference
+  // Generate ticket reference
   const ticketRef = `${Date.now()}${ref}`;
 
   try {
 
-    //Instatiate Ticket entity
-    ticket = new Ticket({ ref, ticketRef, userId, workflowId, categoryId, status:"open", description, vendor, numberOfItems, items, dueDate, document, amount})
+    // const categoryModel = await Category.findById(category).populate("workflow");
+    // console.log('ASADFLKAS;DFASJKDF;LA')
+    // console.log(categoryModel);
+    // return response.success(res, "IGOTHERE");
 
-      
-    // persit ticket
+    // Instatiate Ticket entity
+    ticket = new Ticket({ 
+      ref, ticketRef, user: userId, category, description, vendor, numberOfItems, items, dueDate, amount
+    });
+
+    // Persit ticket
     await ticket.save();
-    let result = _.pick(ticket, ["reference","userId", "phaseId", "workflowId", "categoryId", "Status", "description", "vendor", "numberOfItems", "items", "dueDate", "document", "amount"])
 
-    return response.success(res, TICKET_CONSTANT.TICKET_ADDED);
+    return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
+
   } catch (error) {
-    console.error(err.message);
-    return response.error(res, err.message, 500);
+    console.error(error.message);
+    return response.error(res, error.message, 500);
   }
 
 });
 
 
-
-
 //Get Ticket
-
 router.get("/", userAuth, async (req, res)=>{
     let ticket = {};
     var skipVal, limitVal;
@@ -89,6 +95,7 @@ router.get("/", userAuth, async (req, res)=>{
     var regexName = new RegExp(req.query.reference, "i");
     ticket.reference = regexName;
   }
+  
   if(req.query.userId) ticket.userId = req.query.userId
   if(req.query.categoryId) ticket.categoryId = req.query.categoryId
   if(req.query.workflowId) ticket.workflowId = req.query.workflowId

@@ -83,7 +83,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     
 });
 
-
+// Delete department
 router.delete("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {

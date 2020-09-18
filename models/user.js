@@ -7,22 +7,23 @@ const { Role } = require("../models/role");
 
 const UserSchema = new mongoose.Schema({
     userId: String,
-    roleId: { type: mongoose.Schema.Types.ObjectId, ref: "role" },
+    roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true }],
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
-    phone: { type: String, default: "", required: true, unique: true },
+    phone: { type: String, default: "", unique: true },
     email: { type: String, default: "", required: true, unique: true },
     password: { type: String, default: "" },
     resetPasswordToken: { type: String },
     resetPasswordExpires: { type: Date },
     isVerified: { type: Boolean, default: false },
     accessToken: { type: String, default: "" },
+    refreshToken: { type: String, default: "" },
     status: { type: String, enum: ["active", "inactive", "blocked"], default: "inactive" },
     profilePic: { type: String, default: "" },
     modifiedDate: Number,
     lastLogin: { type: Date }
     // lastLogin: Number,
-}, {timestamps: true});
+}, { timestamps: true });
 
 const User = mongoose.model("User", UserSchema);
 
@@ -45,7 +46,6 @@ const UserAudit = mongoose.model("Useraudit", userAuditSchema);
 
 function validateUserPost(user) {
     const schema = {
-        roleId: Joi.string().required(),
         firstName: Joi.string().min(2).max(200).required(),
         lastName: Joi.string().min(2).max(200).required(),
         password: Joi.string().min(6).max(20).required(),
@@ -114,6 +114,14 @@ function validateResetPassword(user) {
     return Joi.validate(user, schema);
 }
 
+function validateRefreshToken(user) {
+    const schema = {
+        refreshToken: Joi.string().min(32).max(1000).required()
+    };
+    return Joi.validate(user, schema);
+}
+
+
 
 module.exports.User = User;
 module.exports.UserAudit = UserAudit;
@@ -124,3 +132,4 @@ module.exports.validateUserListGet = validateUserListGet;
 module.exports.validateUserLogin = validateUserLogin;
 module.exports.validateChangePassword = validateChangePassword;
 module.exports.validateResetPassword = validateResetPassword;
+module.exports.validateRefreshToken = validateRefreshToken;

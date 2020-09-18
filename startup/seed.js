@@ -4,21 +4,20 @@ const bcrypt = require("bcrypt");
 
 module.exports = async () => {
 
-  var roleAdminExists = await Role.findOne({role:"admin"});
+  var roleAdmin = await Role.findOne({role:"admin"});
   // console.log(roleAdminExists)
-  if(!roleAdminExists) await Role.create({ role: "admin", status: "active" });
+  if(!roleAdmin) roleAdmin = await Role.create({ role: "admin", status: "active" });
   
-  var roleUserExists = await Role.findOne({role:"user"});
+  var roleUser = await Role.findOne({role:"user"});
   // console.log(roleUserExists)
-  if(!roleUserExists) await Role.create({ role: "user", status: "active" });
+  if(!roleUser) roleUser = await Role.create({ role: "user", status: "active" });
   
 
   const userExists = await User.findOne({ email: "anselm.mba@pap.com", phone: "0123456789", status: "active" });
-  const adminRole = await Role.findOne({role:"admin"});
 
-  if(!userExists && adminRole) {
+  if(!userExists && roleAdmin && roleUser) {
     const password = "12345678";
-    user = await User.create({ firstName: "Anselm", lastName: "Starboy", email: "anselm.mba@pap.com", phone: "0123456789", password, roleId: adminRole._id, status: "active", isVerified: true });
+    const user = await User.create({ firstName: "Anselm", lastName: "Starboy", email: "anselm.mba@pap.com", phone: "0123456789", password, roles: [ roleAdmin._id, roleUser._id ], status: "active", isVerified: true });
     
     //create salt for user password hash
     const salt = await bcrypt.genSalt(10);

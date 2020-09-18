@@ -1,4 +1,5 @@
 const { USER_CONSTANTS, AUTH_CONSTANTS } = require("../config/constant.js");
+const util = require("util");
 const jwt = require("jsonwebtoken");
 const mongoose = require("mongoose");
 const config = require("config");
@@ -17,6 +18,7 @@ const {
   validateUserLogin,
   validateChangePassword,
   validateResetPassword,
+  validateRefreshToken
 } = require("../models/user");
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
@@ -157,14 +159,17 @@ router.post("/", async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
-  const { firstName, lastName, phone, password, roleId } = req.body;
+  const { firstName, lastName, phone, password } = req.body;
 
-  console.log( { firstName, lastName, phone, password, email, roleId } );
+  console.log( { firstName, lastName, phone, password, email } );
 
   try {
 
+    // get role id
+    role = await Role.findOne({ role: "user" });
+
     //instantiate User model
-    user = new User({ firstName, lastName, email, phone, password, roleId, status:"inactive" });
+    user = new User({ firstName, lastName, email, phone, password, roles: role._id, status:"inactive" });
 
     //create salt for user password hash
     const salt = await bcrypt.genSalt(10);
@@ -310,43 +315,40 @@ router.post("/login", async (req, res) => {
   if (req.body.email && req.body.email != "") criteria.email = req.body.email.toLowerCase();
 
   let user = await User.findOne(criteria);
- 
-  if (!user) {
-    return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
-  }
+
+  if (!user) return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
 
   if (!user.isVerified) return response.error(res, USER_CONSTANTS.NOT_YET_VERIFIED);
 
   if (user.status != "active") return response.error(res, AUTH_CONSTANTS.INACTIVE_ACCOUNT);
     
-
   const validPassword = await bcrypt.compare(req.body.password, user.password);
   if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
 
-  let roleData = await Role.findById(user.roleId);
-  const role = roleData.role;
-
-  const token = jwt.sign(
-    {
-        userId: user._id,
-        email: user.email,
-        role: role
-    },
-    config.get("jwtPrivateKey")
+  const rolesArray = await Promise.all(user.roles.map( async (roleId) => {
+    let role = await Role.findById(roleId); return role.role;
+  })
   );
 
-  
+  // create access token
+  const payload = { userId:user._id, email: user.email, role:rolesArray };
+  const secret = config.get("jwtPrivateKey");
+  const options = { expiresIn: '1d', issuer: 'datingapp.com', audience: user._id.toString() };
+
+  const token = await jwt.sign(payload, secret, options);
+
+  // create refresh token
+  const refreshTokenPayload = { userId:user._id, email: user.email, role:rolesArray };
+  const refreshTokenSecret = config.get("jwtRefreshTokenPrivateKey");
+  const refreshTokenOptions = { expiresIn: '1y', issuer: 'datingapp.com', audience: user._id.toString() };
+
+  const refreshToken = await jwt.sign(refreshTokenPayload, refreshTokenSecret, refreshTokenOptions);
 
   user.accessToken = token;
+  user.refreshToken = refreshToken;
   user.lastLogin = new Date();
   await user.save();
   user.userId = user._id;
-
-  
-
-  if (roleData) {
-    user.permissions = roleData.permissions;
-  }
 
   let details = _.pick(user, [
     "userId",
@@ -358,7 +360,7 @@ router.post("/login", async (req, res) => {
     "profilePic",
     "lastLogin",
   ]);
-  return response.withData(res, {token: token, details: details, role: role, permissions: user.permissions });
+  return response.withData(res, {token: token, refreshToken: refreshToken, details: details, roles: rolesArray });
 });
 
 // user password change
@@ -458,6 +460,51 @@ router.post("/password/reset/:token", async (req, res) => {
   }
 
 });
+
+
+router.post("/refresh-token", async (req, res) => {
+  const { error } = validateRefreshToken(req.body);
+  if (error) return response.error(res, error.details[0].message);
+
+  const { refreshToken } = req.body;
+
+  try {
+
+    const decoded = await jwt.verify(refreshToken, config.get('jwtRefreshTokenPrivateKey'));
+    console.log(decoded);
+
+    if(!decoded) return response.error(res);
+
+    // create new access token
+    const payload = { userId: decoded.userId, email: decoded.email, role: decoded.role };
+    const secret = config.get("jwtPrivateKey");
+    const options = { expiresIn: '1d', issuer: 'gigpayflow.com', audience: decoded.userId };
+
+    const token = await jwt.sign(payload, secret, options);
+
+    // create new refresh token
+    const newRefreshTokenPayload = { userId: decoded.userId, email: decoded.email, role: decoded.role };
+    const newRefreshTokenSecret = config.get("jwtRefreshTokenPrivateKey");
+    const newRefreshTokenOptions = { expiresIn: '1y', issuer: 'gigpayflow.com', audience: decoded.userId };
+
+    const newRefreshToken = await jwt.sign(newRefreshTokenPayload, newRefreshTokenSecret, newRefreshTokenOptions);
+
+    // get user and replace access token
+    user = await User.findById(decoded.userId);
+    user.accessToken = token;
+    user.refreshToken = newRefreshToken;
+
+    await user.save();
+    return response.withData(res, { token: token, refreshToken: refreshToken });
+    
+  } catch (error) {
+    return response.error(res, error.message);
+  }
+
+});
+
+
+
 
 async function logCurrentUserState(user) {
   let auditUser = new UserAudit({

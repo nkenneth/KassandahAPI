@@ -8,7 +8,7 @@ const VendorSchema = new mongoose.Schema({
     state: { type: String, required: true },
     email: { type: String },
     phone: { type: String }
-});
+}, { timestamps: true });
 
 const Vendor = mongoose.model("Vendor", VendorSchema);
 

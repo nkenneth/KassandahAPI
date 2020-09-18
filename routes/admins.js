@@ -4,7 +4,6 @@ const Joi = require("joi");
 const mongoose = require("mongoose");
 const bcrypt = require("bcrypt");
 const _ = require("lodash");
-const { Admin, validateLogin } = require("../models/admin");
 const { ApiLog } = require("../models/apiLog");
 const { adminAuth, test } = require("../middleware/auth");
 const express = require("express");

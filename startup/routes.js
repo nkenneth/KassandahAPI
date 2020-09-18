@@ -5,6 +5,7 @@ const admins = require("../routes/admins");
 const users = require("../routes/users");
 const tickets = require("../routes/tickets");
 const categories = require("../routes/categories");
+const phases = require("../routes/phases");
 const departments = require("../routes/departments");
 const vendors = require("../routes/vendors");
 const roles = require("../routes/roles");
@@ -20,6 +21,7 @@ module.exports = function (app) {
   app.use("/api/user", users);
   app.use("/api/ticket", tickets);
   app.use("/api/category", categories);
+  app.use("/api/phase", phases);
   app.use("/api/department", departments);
   app.use("/api/vendor", vendors);
   app.use("/api/role", roles);

@@ -29,7 +29,7 @@ const appVersionSchema = new mongoose.Schema({
             return Math.round(new Date() / 1000);
         }
     }
-});
+}, { timestamps: true });
 
 const Version = mongoose.model("version", appVersionSchema);
 

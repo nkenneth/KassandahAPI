@@ -6,7 +6,7 @@ const apiLogSchema = new mongoose.Schema({
     userId: String,
     url: String,
     email: String,
-    role: String,
+    role: Object,
     subRole: String,
     body: Object,
     creationDate: {
@@ -16,7 +16,7 @@ const apiLogSchema = new mongoose.Schema({
         }
     },
     insertDate: { type: Number, default: () => { return Math.round(new Date() / 1000); } }
-});
+}, { timestamps: true });
 
 const ApiLog = mongoose.model("apiLog", apiLogSchema);
 

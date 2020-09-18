@@ -5,24 +5,23 @@ const config = require("config");
 
 
 const TicketSchema = new mongoose.Schema({
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: "user", required: true },
+    user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     ref: { type: String, required: true },
     ticketRef: String,
-    categoryId: { type: mongoose.Schema.Types.ObjectId, ref: "category", required: true },
-    departmentId: { type: mongoose.Schema.Types.ObjectId, ref: "department", required: true },
-    vendorId: { type: mongoose.Schema.Types.ObjectId, ref: "vendor", required: true },
+    category: { type: mongoose.Schema.Types.ObjectId, ref: "Category", required: true },
+    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department", required: true },
+    vendor: { type: mongoose.Schema.Types.ObjectId, ref: "Vendor", required: true },
     items: { type: String, required: true },
     numberOfItems: { type: Number,  required: true },
     description: { type: String, default: "", required: true },
     dueDate: { type: Date, required: true },
     amount: { type: Number,  required: true},
-    phaseId: { type: mongoose.Schema.Types.ObjectId, ref: "phase", required: true },
-    workflowId: { type: mongoose.Schema.Types.ObjectId, ref: "workflow", required: true },
+    phase: { type: mongoose.Schema.Types.ObjectId, ref: "Phase", required: true },
+    workflow: { type: mongoose.Schema.Types.ObjectId, ref: "Workflow", required: true },
     isPossibleDuplicate: { type: Boolean, default: false },
-    status: { type: String, enum: ["open", "closed", "approved", "rejected", "pending"] },
-    creationDate: { type: Date, default: () => { return new Date(); } },
-    insertDate: { type: Number, default: () => { return Math.round(new Date() / 1000); } }
-})
+    isCheck: { type: Boolean, default: false },
+    status: { type: String, enum: [ "open", "closed", "approved", "rejected", "pending" ], default: "open" }
+}, { timestamps: true });
 
 const Ticket = mongoose.model("Ticket", TicketSchema);
 
@@ -30,17 +29,18 @@ function validateTicketPost(ticket) {
     const schema = {
         ref: Joi.string().min(2).max(200).required(),
         items: Joi.string().min(2).max(200).required(),
-        numberOfItems: Joi.number().min(2).max(200).required(),
-        vendorId: Joi.string().required(),
-        categoryId: Joi.string().required(),
-        departmentId: Joi.string().required(),
+        numberOfItems: Joi.number().min(0).max(200).required(),
+        vendor: Joi.string().required(),
+        description: Joi.string().required(),
+        category: Joi.string().required(),
+        department: Joi.string().required(),
         dueDate: Joi.date().min('now').iso().required(),
-        workflowId: Joi.string().required(),
+        amount: Joi.number().min(0).required()
     };
     return Joi.validate(ticket, schema);
 }
 
-function validateTicketPut(ticket) {
+function validateTicketPatch(ticket) {
     const schema = {
         item: Joi.string().min(2).max(200).required(),
         reference: Joi.number().required(),
@@ -67,7 +67,7 @@ function validateTicketListGet(ticket) {
 }
 
 async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
-    
+
     const payload = {
         ref_match: false,
         category_match: false,
@@ -79,7 +79,7 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
     };
     
     let ticketExists = await Ticket.findOne({ ref });
-
+    
     if (ticketExists) {
         payload.ref_match = true;
         payload.score = 100; 
@@ -96,7 +96,6 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
         payload.score = 100; 
         return payload;
     }
-
 
     let possibleDuplicateTicket = await Ticket.findOne({
         $or: [{ categoryId }, { vendorId }], amount, dueDate
@@ -121,12 +120,12 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
         return payload;
     }
 
-
+    return payload;
 }
 
 
 module.exports.Ticket = Ticket;
 module.exports.validateTicketListGet = validateTicketListGet;
 module.exports.validateTicketPost = validateTicketPost;
-module.exports.validateTicketPut = validateTicketPut;
+module.exports.validateTicketPatch = validateTicketPatch;
 module.exports.analyzeTicket = analyzeTicket;
