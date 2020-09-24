@@ -17,13 +17,32 @@ const TicketSchema = new mongoose.Schema({
     dueDate: { type: Date, required: true },
     amount: { type: Number,  required: true},
     phase: { type: mongoose.Schema.Types.ObjectId, ref: "Phase", required: true },
+    phaseStatus: { type: String, enum: [ "approved", "rejected", "pending" ], default: "pending" },
     workflow: { type: mongoose.Schema.Types.ObjectId, ref: "Workflow", required: true },
     isPossibleDuplicate: { type: Boolean, default: false },
-    isCheck: { type: Boolean, default: false },
-    status: { type: String, enum: [ "open", "closed", "approved", "rejected", "pending" ], default: "open" }
+    status: { type: String, enum: [ "approved", "rejected", "pending" ], default: "pending" }
 }, { timestamps: true });
 
 const Ticket = mongoose.model("Ticket", TicketSchema);
+
+
+const ticketAuditSchema = new mongoose.Schema({
+    user: String,
+    ticket: { type: mongoose.Schema.Types.ObjectId, ref: "Ref", required: true },
+    ticketRef: String,
+    category: String,
+    department: String,
+    vendor: String,
+    workflow: String,
+    phase: String,
+    isPossibleDuplicate: String,
+    status: String,
+    phaseStatus: String,
+    modifiedBy: String
+}, { timestamps: true });
+
+const TicketAudit = mongoose.model("Ticketaudit", ticketAuditSchema);
+
 
 function validateTicketPost(ticket) {
     const schema = {
@@ -66,7 +85,7 @@ function validateTicketListGet(ticket) {
     return Joi.validate(ticket, schema);
 }
 
-async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
+async function analyzeTicket( category, vendor, amount, dueDate, ref ) {
 
     const payload = {
         ref_match: false,
@@ -86,9 +105,9 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
         return payload;
     }
     
-    let duplicateTicket = await Ticket.findOne({ categoryId, vendorId, amount, dueDate });
+    let ticketMatchExists = await Ticket.findOne({ category, vendor, amount, dueDate });
 
-    if (duplicateTicket) {
+    if (ticketMatchExists) {
         payload.category_match = true;
         payload.vendor_match = true;
         payload.amount_match = true;
@@ -97,11 +116,11 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
         return payload;
     }
 
-    let possibleDuplicateTicket = await Ticket.findOne({
-        $or: [{ categoryId }, { vendorId }], amount, dueDate
+    let duplicateTicket = await Ticket.findOne({
+        $or: [{ category }, { vendor }], amount, dueDate
     });
 
-    if (possibleDuplicateTicket) {
+    if (duplicateTicket) {
         payload.vendor_match = true;
         payload.amount_match = true;
         payload.dueDate_match = true;
@@ -109,14 +128,14 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
         return payload;
     }
 
-    let checkTicket = await Ticket.findOne({
-        $or: [{ categoryId }, { vendorId }, { dueDate }], amount
+    let possibleDuplicateTicket = await Ticket.findOne({
+        $or: [{ category }, { vendor }, { dueDate }], amount
     });
 
-    if (checkTicket) {
+    if (possibleDuplicateTicket) {
         payload.dueDate_match = true;
         payload.amount_match = true;
-        payload.score = 50; 
+        payload.score = 50;
         return payload;
     }
 
@@ -125,6 +144,7 @@ async function analyzeTicket( categoryId, vendorId, amount, dueDate, ref ) {
 
 
 module.exports.Ticket = Ticket;
+module.exports.TicketAudit = TicketAudit;
 module.exports.validateTicketListGet = validateTicketListGet;
 module.exports.validateTicketPost = validateTicketPost;
 module.exports.validateTicketPatch = validateTicketPatch;

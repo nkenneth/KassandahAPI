@@ -1,10 +1,9 @@
 const mongoose = require("mongoose")
 const Joi = require("joi");
 
-const WorkflowSchema = new mongoose.Schema({
-    name: { type: String, default:"", required: true },
-    description: { type: String, default:""},
-    phases: [{ type: mongoose.Schema.Types.ObjectId, ref: "Phase", required: true }]
+const CommentSchema = new mongoose.Schema({
+    ticket: [{ type: mongoose.Schema.Types.ObjectId, ref: "Ticket", required: true }]
+    comment: { type: String, default:"", required: true },
 }, { timestamps: true });
 
 const Workflow = mongoose.model("Workflow", WorkflowSchema);

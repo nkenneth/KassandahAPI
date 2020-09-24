@@ -42,7 +42,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validateDepartmentPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name, hod } = req.body;
+    const { name, hod, deputyhod, description } = req.body;
 
     try {
         let departmentExists = await Department.findOne({ name });
@@ -50,7 +50,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
         }
 
-        department = await Department.create({ name, hod });
+        department = await Department.create({ name, hod, deputyhod, description });
         return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_CREATED);
 
     } catch (error) {

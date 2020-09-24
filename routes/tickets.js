@@ -14,6 +14,8 @@ const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
 const { Sla } = require("../models/sla");
+const { sendPhaseApprovalMail } = require("../services/amazonSes");
+
 
 mongoose.set("debug", true);
 
@@ -24,53 +26,61 @@ router.post("/", userAuth, async (req, res) => {
   if (error) return response.validationErrors(res, error.details[0].message);
 
   // collect reference from invoice and make lowercase
-  const ref = req.body.ref.toLowerCase();
+  const ref = req.body.ref.toUpperCase();
   
   //set userId
   user = await User.findOne({email: req.jwtData.email});
   if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
   const userId = user._id;
   
+  let isPossibleDuplicate = false;
+
   const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
 
   // mitigate duplicate ticket issuing
   payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
 
-  if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
-  
-  switch (payload.score) {
-    case 100:
-      return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
-  
-    case 75:
-      return response.error(res, TICKET_CONSTANTS.POSSIBLE_DUPLICATE_TICKET);
-  
-    case 50:
-      user.isCheck = true;
-
-    default:
-      break;
-  }
-
-  // Generate ticket reference
-  const ticketRef = `${Date.now()}${ref}`;
+  // if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
+  if (payload.score >= 50) isPossibleDuplicate = true;
 
   try {
+    // Generate ticket reference
+    const ticketRef = `${Date.now()}${ref}`;
 
-    // const categoryModel = await Category.findById(category).populate("workflow");
-    // console.log('ASADFLKAS;DFASJKDF;LA')
-    // console.log(categoryModel);
-    // return response.success(res, "IGOTHERE");
+    // Fetch ticket category
+    const categoryModel = await Category.findById(category);
+    console.log(categoryModel);
+
+    // Fetch ticket workflow
+    const workflowModel = await Workflow.findById(categoryModel.workflow);
+    const workflow = workflowModel._id;
+    console.log(workflow);
+
+    // Set ticket current phase 
+    const phase = workflowModel.phases[0];
 
     // Instatiate Ticket entity
     ticket = new Ticket({ 
-      ref, ticketRef, user: userId, category, description, vendor, numberOfItems, items, dueDate, amount
+      ref, ticketRef, user: userId, category, department, 
+      description, vendor, workflow, phase, numberOfItems, 
+      items, dueDate, amount, isPossibleDuplicate
     });
 
     // Persit ticket
     await ticket.save();
 
-    return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
+    // Fetch phase model and email approver
+    const phaseModel = await Phase.findById(phase);
+    const approver = await User.findById(phaseModel.approver).email;
+
+    // sendTicketApprovalEmail()
+    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+
+    // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
+    let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
+
+    // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
+    return response.withData(res, result);
 
   } catch (error) {
     console.error(error.message);

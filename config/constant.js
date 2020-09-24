@@ -88,6 +88,16 @@ const PHASE_CONSTANTS = {
   PHASE_NOT_FOUND: "Phase NOT found"
 };
 
+
+const WORKFLOW_CONSTANTS = {
+  WORKFLOW_EXISTS: "Workflow exists",
+  WORKFLOW_CREATED: "Workflow created successfully",
+  WORKFLOW_UPDATED: "Workflow updated successfully",
+  WORKFLOW_DELETED: "Workflow deleted successfully",
+  WORKFLOW_NOT_FOUND: "Workflow NOT found"
+};
+
+
 const DEPARTMENT_CONSTANTS = {
   DEPARTMENT_EXISTS: "Department exists",
   DEPARTMENT_CREATED: "Department created successfully",
@@ -115,5 +125,6 @@ module.exports.USER_CONSTANTS = USER_CONSTANTS;
 module.exports.TICKET_CONSTANTS = TICKET_CONSTANTS;
 module.exports.CATEGORY_CONSTANTS = CATEGORY_CONSTANTS;
 module.exports.PHASE_CONSTANTS = PHASE_CONSTANTS;
+module.exports.WORKFLOW_CONSTANTS = WORKFLOW_CONSTANTS;
 module.exports.DEPARTMENT_CONSTANTS = DEPARTMENT_CONSTANTS;
 module.exports.VENDOR_CONSTANTS = VENDOR_CONSTANTS;

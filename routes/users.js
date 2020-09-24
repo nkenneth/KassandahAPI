@@ -23,11 +23,11 @@ const {
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
 // const { sendUserRegisterMail } = require("../services/amazonSes");
-const { sendUserVerificationMail } = require("../services/amazonSes");
-const { sendResetPasswordMail } = require("../services/amazonSes");
+const { sendUserVerificationMail, sendResetPasswordMail } = require("../services/amazonSes");
 //const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
+const { publishToQueue } = require("../services/MQService");
 
 mongoose.set("debug", true);
 
@@ -187,8 +187,10 @@ router.post("/", async (req, res) => {
     token.save(function (err) {
         if (err) return response.error(res, err.message, 500); 
     });
-
-    await sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+    const queueName = "email-verification"
+    const payload = "Welcome to GIG PAYFLOW now KASSANDAH"
+    // await publishToQueue(queueName, payload);
+    sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     

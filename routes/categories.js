@@ -42,7 +42,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validateCategoryPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name } = req.body;
+    const { name, description, workflow } = req.body;
 
     try {
         let categoryExists = await Category.findOne({ name });
@@ -50,7 +50,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, CATEGORY_CONSTANTS.CATEGORY_EXISTS);
         }
 
-        category = await Category.create({ name });
+        category = await Category.create({ name, description, workflow });
         return response.success(res, CATEGORY_CONSTANTS.CATEGORY_CREATED);
 
     } catch (error) {

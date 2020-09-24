@@ -13,6 +13,7 @@ const Category = mongoose.model("Category", CategorySchema);
 function validateCategoryPost(category) {
     const schema = {
         name: Joi.string().required(),
+        description: Joi.string().required(),
         workflow: Joi.string().required()
     };
     return Joi.validate(category, schema);
@@ -21,6 +22,7 @@ function validateCategoryPost(category) {
 function validateCategoryPatch(category) {
     const schema = {
         name: Joi.string().required(),
+        description: Joi.string().required(),
         workflow: Joi.string().required()
     };
     return Joi.validate(category, schema);
