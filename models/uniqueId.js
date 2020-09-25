@@ -10,7 +10,7 @@ const uniqueIdSchema = new mongoose.Schema({
             return new Date();
         },
     }
-});
+}, { timestamps: true });
 
 const UniqueId = mongoose.model("UniqueId", uniqueIdSchema);
 

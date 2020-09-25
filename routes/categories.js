@@ -80,7 +80,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     
 });
 
-
+// Delete category
 router.delete("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {

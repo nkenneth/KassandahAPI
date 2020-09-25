@@ -80,6 +80,14 @@ const CATEGORY_CONSTANTS = {
   CATEGORY_NOT_FOUND: "Category NOT found"
 };
 
+const PHASE_CONSTANTS = {
+  PHASE_EXISTS: "Phase exists",
+  PHASE_CREATED: "Phase created successfully",
+  PHASE_UPDATED: "Phase updated successfully",
+  PHASE_DELETED: "Phase deleted successfully",
+  PHASE_NOT_FOUND: "Phase NOT found"
+};
+
 const DEPARTMENT_CONSTANTS = {
   DEPARTMENT_EXISTS: "Department exists",
   DEPARTMENT_CREATED: "Department created successfully",
@@ -106,5 +114,6 @@ module.exports.ROLE_CONSTANTS = ROLE_CONSTANTS;
 module.exports.USER_CONSTANTS = USER_CONSTANTS;
 module.exports.TICKET_CONSTANTS = TICKET_CONSTANTS;
 module.exports.CATEGORY_CONSTANTS = CATEGORY_CONSTANTS;
+module.exports.PHASE_CONSTANTS = PHASE_CONSTANTS;
 module.exports.DEPARTMENT_CONSTANTS = DEPARTMENT_CONSTANTS;
 module.exports.VENDOR_CONSTANTS = VENDOR_CONSTANTS;

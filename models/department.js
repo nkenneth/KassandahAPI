@@ -4,9 +4,10 @@ const Joi = require("joi");
 
 const DepartmentSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    hod: { type: String, required:true },
+    hod: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+    deputyhod: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     description: { type: String }
-});
+}, { timestamps: true });
 
 const Department = mongoose.model("Department", DepartmentSchema);
 
@@ -14,7 +15,9 @@ const Department = mongoose.model("Department", DepartmentSchema);
 function validateDepartmentPost(department) {
     const schema = {
         name: Joi.string().required(),
-        hod: Joi.string().required()
+        hod: Joi.string().required(),
+        deputyhod: Joi.string(),
+        description: Joi.string()
     };
     return Joi.validate(department, schema);
 }
@@ -22,8 +25,10 @@ function validateDepartmentPost(department) {
 
 function validateDepartmentPatch(department) {
     const schema = {
-        name: Joi.string(),
-        hod: Joi.string()
+        name: Joi.string().required(),
+        hod: Joi.string().required(),
+        deputyhod: Joi.string(),
+        description: Joi.string()
     };
     return Joi.validate(department, schema);
 }

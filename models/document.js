@@ -4,9 +4,9 @@ const Joi = require("joi");
 
 
 const DocumentSchema = new mongoose.Schema({
-    ticketId: { type: mongoose.Schema.Types.ObjectId, ref: "ticket" },
+    ticket: { type: mongoose.Schema.Types.ObjectId, ref: "Ticket" },
     document: { type: String, required: true }
-}, {timestamps: true});
+}, { timestamps: true });
 
 const Document = mongoose.model("Document", DocumentSchema);
 
