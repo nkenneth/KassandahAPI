@@ -27,7 +27,7 @@ const { sendUserVerificationMail, sendResetPasswordMail } = require("../services
 //const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
-const { publishToQueue } = require("../services/MQService");
+// const { publishToQueue } = require("../services/MQService");
 
 mongoose.set("debug", true);
 

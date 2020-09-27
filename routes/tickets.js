@@ -4,6 +4,10 @@ const mongoose = require("mongoose");
 const response = require("../services/response");
 const _ = require("lodash");
 const express = require("express");
+const multer = require("multer");
+const fs = require("fs");
+const fileService = require("../services/fileService");
+const path = require("path");
 const router = express.Router();
 const { Ticket, 
     validateTicketPost,
@@ -13,20 +17,45 @@ const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
-const { Sla } = require("../models/sla");
 const { sendPhaseApprovalMail } = require("../services/amazonSes");
 
 
-mongoose.set("debug", true);
+// mongoose.set("debug", true);
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+      cb(null, './storage/ticketdocs/');
+  },
+
+  // add file extensions
+  filename: function(req, file, cb) {
+      let extension = path.extname(file.originalname);
+      let filenameWithoutExtention = path.basename(file.originalname, extension);
+      cb(null, file.fieldname + '-' + Date.now() + '-' + filenameWithoutExtention + extension);
+  }
+});
+
+let upload = multer({ storage: storage, fileFilter: fileService.documentFilter }).array('documents', 5);
 
 
 // Create ticket
-router.post("/", userAuth, async (req, res) => {
+router.post("/", userAuth, upload, async (req, res) => { 
   const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
+  if(req.fileValidationError) {
+    req.files.forEach( (file) => { fs.unlinkSync(file.path) })
+    return response.error(res, req.fileValidationError);
+  }
+
+  if (!req.files) {
+    return response.error(res, 'Please select a document to upload');
+  }
+
+
+
   // collect reference from invoice and make lowercase
-  const ref = req.body.ref.toUpperCase();
+  const ref = req.body.ref;
   
   //set userId
   user = await User.findOne({email: req.jwtData.email});
@@ -59,7 +88,7 @@ router.post("/", userAuth, async (req, res) => {
     // Set ticket current phase 
     const phase = workflowModel.phases[0];
 
-    // Instatiate Ticket entity
+    // Instatiate ticket entity
     ticket = new Ticket({ 
       ref, ticketRef, user: userId, category, department, 
       description, vendor, workflow, phase, numberOfItems, 
@@ -71,7 +100,7 @@ router.post("/", userAuth, async (req, res) => {
 
     // Fetch phase model and email approver
     const phaseModel = await Phase.findById(phase);
-    const approver = await User.findById(phaseModel.approver).email;
+    const approverEmail = await User.findById(phaseModel.approver).email;
 
     // sendTicketApprovalEmail()
     // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
