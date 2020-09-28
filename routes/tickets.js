@@ -115,30 +115,60 @@ router.post("/", userAuth, upload, async (req, res) => {
     console.error(error.message);
     return response.error(res, error.message, 500);
   }
-
 });
 
 
-//Get Ticket
-router.get("/", userAuth, async (req, res)=>{
-    let ticket = {};
-    var skipVal, limitVal;
-  if (isNaN(parseInt(req.query.offset))) skipVal = 0;
+//Get Ticket List
+router.get("/", userAuth, async (req, res)=> {
+  try {
+    ticketList = await Ticket.find({});
+    console.log(ticketList);
+    return response.withData(res, ticketList);
+  } catch (error) {
+      console.log(error);
+      return response.error(res, error.message);
+  }
+  
+})
+
+
+
+// Get  Single Ticket
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+      ticket = await Ticket.findById(id);
+      console.log(ticket);
+      return response.withData(res, ticket);
+  } catch (error) {
+      return response.error(res, error.message);
+  }
+  
+});
+
+
+
+// Get ticket list awaiting approval
+router.get("/approval/pending", async (req, res) => {
+  let ticket = {};
+  var skipVal, limitVal;
+  
+  if(isNaN(parseInt(req.query.offset))) skipVal = 0;
   else skipVal = parseInt(req.query.offset);
 
-  if (isNaN(parseInt(req.query.limit))) limitVal = 500;
+  if(isNaN(parseInt(req.query.limit))) limitVal = 500;
   else limitVal = parseInt(req.query.limit);
 
   
-  if (req.query.reference) {
+  if(req.query.reference) {
     var regexName = new RegExp(req.query.reference, "i");
     ticket.reference = regexName;
   }
   
-  if(req.query.userId) ticket.userId = req.query.userId
-  if(req.query.categoryId) ticket.categoryId = req.query.categoryId
-  if(req.query.workflowId) ticket.workflowId = req.query.workflowId
-  if(req.query.phaseId) ticket.phaseId = req.query.phaseId
+  if(req.query.userId) ticket.user = req.query.user
+  if(req.query.categoryId) ticket.category = req.query.category
+  if(req.query.workflowId) ticket.workflow = req.query.workflow
+  if(req.query.phaseId) ticket.phase = req.query.phase
   if(req.query.status) ticket.status = req.query.status
 
   let ticketList = await Ticket.aggregate([
@@ -166,9 +196,10 @@ router.get("/", userAuth, async (req, res)=>{
         creationDate: 1,   
      }}
   ])
-  res.send({ statusCode: 200, message: "Success", data: { ticketList } });
+  
+  response.withData(res, ticketList);
 
-})
+});
 
 
 module.exports = router
