@@ -9,7 +9,7 @@ const { adminAuth } = require("../middleware/auth");
 
 
 // Get  Single Department
-router.get("/:id", userAuth, async (req, res) => {
+router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         department = await Department.findById(id);
