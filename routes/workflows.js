@@ -9,7 +9,7 @@ const { adminAuth } = require("../middleware/auth");
 
 
 // Get  Single Workflow
-router.get("/:id", async (req, res) => {
+router.get("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {
         workflow = await Workflow.findById(id);
@@ -24,7 +24,7 @@ router.get("/:id", async (req, res) => {
 
 
 // Get Workflow List
-router.get("/", async (req, res) => {
+router.get("/", adminAuth, async (req, res) => {
 
     try {
         workflowList = await Workflow.find({});
