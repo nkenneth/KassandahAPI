@@ -13,6 +13,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         vendor = await Vendor.findById(id);
+        if(!vendor) return response.error(res, "Vendor not found");
         console.log(vendor);
         return response.withData(res, vendor);
     } catch (error) {

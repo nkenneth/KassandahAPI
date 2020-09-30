@@ -13,6 +13,7 @@ router.get("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {
         workflow = await Workflow.findById(id);
+        if(!workflow) return response.error(res, "Workflow not found");
         console.log(workflow);
         return response.withData(res, workflow);
     } catch (error) {

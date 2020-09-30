@@ -13,6 +13,7 @@ router.get("/:id", userAuth, async (req, res) => {
     const { id } = req.params;
     try {
         department = await Department.findById(id);
+        if(!department) return response.error(res, "Department not found");
         console.log(department);
         return response.withData(res, department);
     } catch (error) {

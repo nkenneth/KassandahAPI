@@ -13,6 +13,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         category = await Category.findById(id);
+        if(!category) return response.error(res, "Category not found");
         console.log(category);
         return response.withData(res, category);
     } catch (error) {

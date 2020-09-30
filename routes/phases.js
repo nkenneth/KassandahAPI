@@ -13,6 +13,7 @@ router.get("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {
         phase = await Phase.findById(id);
+        if(!phase) return response.error(res, "Phase not found");
         console.log(phase);
         return response.withData(res, phase);
     } catch (error) {

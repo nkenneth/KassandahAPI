@@ -139,6 +139,7 @@ router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
       ticket = await Ticket.findById(id);
+      if(!ticket) return response.error(res, "Ticket not found");
       console.log(ticket);
       return response.withData(res, ticket);
   } catch (error) {
