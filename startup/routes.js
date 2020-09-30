@@ -17,6 +17,7 @@ const error = require("../middleware/error");
 module.exports = function (app) {
   app.use(express.json());
   app.use(reqLogger);
+  app.use("/", (req, res) => { res.json({status: true, message: "Welcome to Kassandah API :)"}) });
   app.use("/api/version", appVersions);
   app.use("/api/admin", admins);
   app.use("/api/user", users);
