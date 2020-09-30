@@ -18,6 +18,7 @@ const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
 const { sendPhaseApprovalMail } = require("../services/amazonSes");
+const { Z_NEED_DICT } = require("zlib");
 
 
 // mongoose.set("debug", true);
@@ -149,55 +150,67 @@ router.get("/:id", async (req, res) => {
 
 
 // Get ticket list awaiting approval
-router.get("/approval/pending", async (req, res) => {
+router.get("/approval/pending", userAuth, async (req, res) => {
+  
   let ticket = {};
-  var skipVal, limitVal;
-  
-  if(isNaN(parseInt(req.query.offset))) skipVal = 0;
-  else skipVal = parseInt(req.query.offset);
+  // user = req.jwtData.userId;
+  phases = await Phase.find({approver: req.jwtData.userId})
 
-  if(isNaN(parseInt(req.query.limit))) limitVal = 500;
-  else limitVal = parseInt(req.query.limit);
+  // phases = Phase.find({email: req.jwtData.email});
+  // console.log( phases)
+
+  // if(!phases) return response.error(res)
+
+  // to get a phase that is due for approval we will nned -> ticketphase, phasestatus, 
+  
+  // let ticket = {};
+  // var skipVal, limitVal;
+  
+  // if(isNaN(parseInt(req.query.offset))) skipVal = 0;
+  // else skipVal = parseInt(req.query.offset);
+
+  // if(isNaN(parseInt(req.query.limit))) limitVal = 500;
+  // else limitVal = parseInt(req.query.limit);
 
   
-  if(req.query.reference) {
-    var regexName = new RegExp(req.query.reference, "i");
-    ticket.reference = regexName;
-  }
+  // if(req.query.reference) {
+  //   var regexName = new RegExp(req.query.reference, "i");
+  //   ticket.reference = regexName;
+  // }
   
-  if(req.query.userId) ticket.user = req.query.user
-  if(req.query.categoryId) ticket.category = req.query.category
-  if(req.query.workflowId) ticket.workflow = req.query.workflow
-  if(req.query.phaseId) ticket.phase = req.query.phase
-  if(req.query.status) ticket.status = req.query.status
+  // if(req.query.userId) ticket.user = req.query.user
+  // if(req.query.categoryId) ticket.category = req.query.category
+  // if(req.query.workflowId) ticket.workflow = req.query.workflow
+  // if(req.query.phaseId) ticket.phase = req.query.phase
+  // if(req.query.status) ticket.status = req.query.status
 
-  let ticketList = await Ticket.aggregate([
-    { $match: ticket },
-    { $sort: { insertDate: -1 } },
-    { $skip: skipVal },
-    { $limit: limitVal },
-    { $lookup: { from: "user", localField: "id", foreignField: "userid", as: "userData" } },
-    { $lookup: { from: "phase", localField: "id", foreignField: "phaseId", as: "phaseData" } },
-    { $lookup: { from: "workflow", localField: "id", foreignField: "workflowId", as: "workflowData" } },
-    { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
-    { $project : {
-        _id:0,
-        reference: 1,
-        code: 1,
-        user: { $arrayElemAt: [ "$userData.firstname", 0] },
-        workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
-        phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
-        category: { $arrayElemAt: [ "$categoryData.reference", 0] },
-        userId: 1,
-        workflowid: 1,
-        phaseId: 1,
-        categoryId: 1,
-        insertDate: 1,
-        creationDate: 1,   
-     }}
-  ])
-  
-  response.withData(res, ticketList);
+  // let ticketList = await Ticket.aggregate([
+  //   { $match: ticket },
+  //   { $sort: { insertDate: -1 } },
+  //   { $skip: skipVal },
+  //   { $limit: limitVal },
+  //   { $lookup: { from: "user", localField: "id", foreignField: "userid", as: "userData" } },
+  //   { $lookup: { from: "phase", localField: "id", foreignField: "phaseId", as: "phaseData" } },
+  //   { $lookup: { from: "workflow", localField: "id", foreignField: "workflowId", as: "workflowData" } },
+  //   { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
+  //   { $project : {
+  //       _id:0,
+  //       reference: 1,
+  //       code: 1,
+  //       user: { $arrayElemAt: [ "$userData.firstname", 0] },
+  //       workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
+  //       phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
+  //       category: { $arrayElemAt: [ "$categoryData.reference", 0] },
+  //       userId: 1,
+  //       workflowid: 1,
+  //       phaseId: 1,
+  //       categoryId: 1,
+  //       insertDate: 1,
+  //       creationDate: 1,   
+  //   }}
+  // ])
+
+  response.withData(res,  phases);
 
 });
 

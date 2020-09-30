@@ -506,8 +506,6 @@ router.post("/refresh-token", async (req, res) => {
 });
 
 
-
-
 async function logCurrentUserState(user) {
   let auditUser = new UserAudit({
     userId: user._id.toString(),
@@ -523,7 +521,6 @@ async function logCurrentUserState(user) {
     modifiedBy: user.modifiedBy,
     modifiedDate: user.modifiedDate
   })
-
   await auditUser.save()
 }
 

@@ -9,7 +9,7 @@ const { adminAuth } = require("../middleware/auth");
 
 
 // Get  Single Department
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
     const { id } = req.params;
     try {
         department = await Department.findById(id);
@@ -24,7 +24,7 @@ router.get("/:id", async (req, res) => {
 
 
 // Get Department List
-router.get("/", async (req, res) => {
+router.get("/", userAuth, async (req, res) => {
 
     try {
         departmentList = await Department.find({});
@@ -83,6 +83,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     
 });
 
+
 // Delete department
 router.delete("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
@@ -96,8 +97,5 @@ router.delete("/:id", adminAuth, async (req, res) => {
         return response.error(res, error.message);
     }
 });
-
-
-
 
 module.exports = router;
