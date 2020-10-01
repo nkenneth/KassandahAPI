@@ -66,13 +66,13 @@ router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateCategoryPatch(req.body);
     if (error) return response.error(res, error.details[0].message); 
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, description, workflow } = req.body;
 
     try {
         let categoryExists = await Category.findById(id);
         if (!categoryExists) return response.error(res, CATEGORY_CONSTANTS.CATEGORY_NOT_FOUND);
 
-        category = await Category.updateOne({ name });
+        category = await Category.updateOne({ name, description, workflow });
         return response.success(res, CATEGORY_CONSTANTS.CATEGORY_UPDATED);
 
     } catch (error) {
