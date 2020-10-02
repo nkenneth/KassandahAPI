@@ -13,6 +13,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         vendor = await Vendor.findById(id);
+        if(!vendor) return response.error(res, "Vendor not found");
         console.log(vendor);
         return response.withData(res, vendor);
     } catch (error) {
@@ -72,7 +73,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let vendorExists = await Vendor.findById(id);
         if (!vendorExists) return response.error(res, VENDOR_CONSTANTS.VENDOR_NOT_FOUND);
 
-        vendor = await Vendor.updateOne({ name });
+        vendor = await vendorExists.updateOne({ name });
         return response.success(res, VENDOR_CONSTANTS.VENDOR_UPDATED);
 
     } catch (error) {

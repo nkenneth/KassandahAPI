@@ -4,10 +4,9 @@ const Joi = require("joi");
 
 const PhaseSchema = new mongoose.Schema({
     name: { type: String, default: "", required: true },
-    user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    // slaId: {type: mongoose.Schema.Types.ObjectId, ref:"sla"}
+    approver: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     sla: { type: Number, default: 3 },
-    // sla: { type: Date },
+    phaseType: { type: String, enum: ["transit", "end"], required: true },
     isDynamic: { type: Boolean, default: true, required: true }
 }, { timestamps: true } )
 
@@ -16,10 +15,10 @@ const Phase = mongoose.model("Phase", PhaseSchema);
 function validatePhasePost(phase) {
     const schema = {
         name: Joi.string().required(),
-        user: Joi.string(),
+        phaseType: Joi.string().required(),
+        approver: Joi.string(),
         sla: Joi.number(),
         isDynamic: Joi.boolean().required()
-
     };
     return Joi.validate(phase, schema);
 }
@@ -27,10 +26,10 @@ function validatePhasePost(phase) {
 function validatePhasePatch(phase) {
     const schema = {
         name: Joi.string().required(),
-        user: Joi.string(),
+        phaseType: Joi.string().required(),
+        approver: Joi.string(),
         sla: Joi.number(),
         isDynamic: Joi.boolean().required()
-
     };
     return Joi.validate(phase, schema);
 }

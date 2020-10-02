@@ -9,10 +9,11 @@ const { adminAuth } = require("../middleware/auth");
 
 
 // Get  Single Phase
-router.get("/:id", async (req, res) => {
+router.get("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {
         phase = await Phase.findById(id);
+        if(!phase) return response.error(res, "Phase not found");
         console.log(phase);
         return response.withData(res, phase);
     } catch (error) {
@@ -24,7 +25,7 @@ router.get("/:id", async (req, res) => {
 
 
 // Get Phase List
-router.get("/", async (req, res) => {
+router.get("/", adminAuth, async (req, res) => {
 
     try {
         phaseList = await Phase.find({});
@@ -42,7 +43,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validatePhasePost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name, user, sla, isDynamic } = req.body;
+    const { name, phaseType, approver, sla, isDynamic } = req.body;
 
     try {
         let phaseExists = await Phase.findOne({ name });
@@ -50,7 +51,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, PHASE_CONSTANTS.PHASE_EXISTS);
         }
 
-        phase = await Phase.create({ name, user, sla, isDynamic });
+        phase = await Phase.create({ name, phaseType, approver, sla, isDynamic });
         return response.success(res, PHASE_CONSTANTS.PHASE_CREATED);
 
     } catch (error) {
@@ -67,13 +68,13 @@ router.patch("/:id", adminAuth, async (req, res) => {
     
     const { id } = req.params;
     
-    const { name, user, sla, isDynamic } = req.body;
+    const { name, phaseType, approver, sla, isDynamic } = req.body;
     
     try {
         let phaseExists = await Phase.findById(id);
         if (!phaseExists) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
 
-        phase = await Phase.updateOne({ name, user, sla, isDynamic });
+        phase = await phaseExists.updateOne({ name, phaseType, approver, sla, isDynamic });
         return response.success(res, PHASE_CONSTANTS.PHASE_UPDATED);
 
     } catch (error) {

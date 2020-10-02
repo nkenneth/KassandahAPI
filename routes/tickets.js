@@ -4,6 +4,10 @@ const mongoose = require("mongoose");
 const response = require("../services/response");
 const _ = require("lodash");
 const express = require("express");
+const multer = require("multer");
+const fs = require("fs");
+const fileService = require("../services/fileService");
+const path = require("path");
 const router = express.Router();
 const { Ticket, 
     validateTicketPost,
@@ -13,123 +17,206 @@ const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
-const { Sla } = require("../models/sla");
+const { sendPhaseApprovalMail } = require("../services/amazonSes");
+const { Z_NEED_DICT } = require("zlib");
 
-mongoose.set("debug", true);
+
+// mongoose.set("debug", true);
+
+const storage = multer.diskStorage({
+  destination: function(req, file, cb) {
+      cb(null, './storage/ticketdocs/');
+  },
+
+  // add file extensions
+  filename: function(req, file, cb) {
+      let extension = path.extname(file.originalname);
+      let filenameWithoutExtention = path.basename(file.originalname, extension);
+      cb(null, file.fieldname + '-' + Date.now() + '-' + filenameWithoutExtention + extension);
+  }
+});
+
+let upload = multer({ storage: storage, fileFilter: fileService.documentFilter }).array('documents', 5);
 
 
 // Create ticket
-router.post("/", userAuth, async (req, res) => {
+router.post("/", userAuth, upload, async (req, res) => { 
   const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
+  if(req.fileValidationError) {
+    req.files.forEach( (file) => { fs.unlinkSync(file.path) })
+    return response.error(res, req.fileValidationError);
+  }
+
+  if (!req.files) {
+    return response.error(res, 'Please select a document to upload');
+  }
+
+
+
   // collect reference from invoice and make lowercase
-  const ref = req.body.ref.toLowerCase();
+  const ref = req.body.ref;
   
   //set userId
   user = await User.findOne({email: req.jwtData.email});
   if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
   const userId = user._id;
   
+  let isPossibleDuplicate = false;
+
   const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
 
   // mitigate duplicate ticket issuing
   payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
 
-  if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
-  
-  switch (payload.score) {
-    case 100:
-      return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
-  
-    case 75:
-      return response.error(res, TICKET_CONSTANTS.POSSIBLE_DUPLICATE_TICKET);
-  
-    case 50:
-      user.isCheck = true;
-
-    default:
-      break;
-  }
-
-  // Generate ticket reference
-  const ticketRef = `${Date.now()}${ref}`;
+  // if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
+  if (payload.score >= 50) isPossibleDuplicate = true;
 
   try {
+    // Generate ticket reference
+    const ticketRef = `${Date.now()}${ref}`;
 
-    // const categoryModel = await Category.findById(category).populate("workflow");
-    // console.log('ASADFLKAS;DFASJKDF;LA')
-    // console.log(categoryModel);
-    // return response.success(res, "IGOTHERE");
+    // Fetch ticket category
+    const categoryModel = await Category.findById(category);
+    console.log(categoryModel);
 
-    // Instatiate Ticket entity
+    // Fetch ticket workflow
+    const workflowModel = await Workflow.findById(categoryModel.workflow);
+    const workflow = workflowModel._id;
+    console.log(workflow);
+
+    // Set ticket current phase 
+    const phase = workflowModel.phases[0];
+
+    // Instatiate ticket entity
     ticket = new Ticket({ 
-      ref, ticketRef, user: userId, category, description, vendor, numberOfItems, items, dueDate, amount
+      ref, ticketRef, user: userId, category, department, 
+      description, vendor, workflow, phase, numberOfItems, 
+      items, dueDate, amount, isPossibleDuplicate
     });
 
     // Persit ticket
     await ticket.save();
 
-    return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
+    // Fetch phase model and email approver
+    const phaseModel = await Phase.findById(phase);
+    const approverEmail = await User.findById(phaseModel.approver).email;
+
+    // sendTicketApprovalEmail()
+    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+
+    // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
+    let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
+
+    // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
+    return response.withData(res, result);
 
   } catch (error) {
     console.error(error.message);
     return response.error(res, error.message, 500);
   }
-
 });
 
 
-//Get Ticket
-router.get("/", userAuth, async (req, res)=>{
-    let ticket = {};
-    var skipVal, limitVal;
-  if (isNaN(parseInt(req.query.offset))) skipVal = 0;
-  else skipVal = parseInt(req.query.offset);
-
-  if (isNaN(parseInt(req.query.limit))) limitVal = 500;
-  else limitVal = parseInt(req.query.limit);
-
-  
-  if (req.query.reference) {
-    var regexName = new RegExp(req.query.reference, "i");
-    ticket.reference = regexName;
+//Get Ticket List
+router.get("/", userAuth, async (req, res)=> {
+  try {
+    ticketList = await Ticket.find({});
+    console.log(ticketList);
+    return response.withData(res, ticketList);
+  } catch (error) {
+      console.log(error);
+      return response.error(res, error.message);
   }
   
-  if(req.query.userId) ticket.userId = req.query.userId
-  if(req.query.categoryId) ticket.categoryId = req.query.categoryId
-  if(req.query.workflowId) ticket.workflowId = req.query.workflowId
-  if(req.query.phaseId) ticket.phaseId = req.query.phaseId
-  if(req.query.status) ticket.status = req.query.status
-
-  let ticketList = await Ticket.aggregate([
-    { $match: ticket },
-    { $sort: { insertDate: -1 } },
-    { $skip: skipVal },
-    { $limit: limitVal },
-    { $lookup: { from: "user", localField: "id", foreignField: "userid", as: "userData" } },
-    { $lookup: { from: "phase", localField: "id", foreignField: "phaseId", as: "phaseData" } },
-    { $lookup: { from: "workflow", localField: "id", foreignField: "workflowId", as: "workflowData" } },
-    { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
-    { $project : {
-        _id:0,
-        reference: 1,
-        code: 1,
-        user: { $arrayElemAt: [ "$userData.firstname", 0] },
-        workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
-        phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
-        category: { $arrayElemAt: [ "$categoryData.reference", 0] },
-        userId: 1,
-        workflowid: 1,
-        phaseId: 1,
-        categoryId: 1,
-        insertDate: 1,
-        creationDate: 1,   
-     }}
-  ])
-  res.send({ statusCode: 200, message: "Success", data: { ticketList } });
-
 })
+
+
+
+// Get  Single Ticket
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+      ticket = await Ticket.findById(id);
+      if(!ticket) return response.error(res, "Ticket not found");
+      console.log(ticket);
+      return response.withData(res, ticket);
+  } catch (error) {
+      return response.error(res, error.message);
+  }
+  
+});
+
+
+
+// Get ticket list awaiting approval
+router.get("/approval/pending", userAuth, async (req, res) => {
+  
+  let ticket = {};
+
+  // user = req.jwtData.userId;
+  phases = await Phase.find({approver: req.jwtData.userId});
+
+  // function 
+
+  // phases = Phase.find({email: req.jwtData.email});
+  // console.log( phases)
+
+  // if(!phases) return response.error(res)
+
+  // to get a phase that is due for approval we will nned -> ticketphase, phasestatus, 
+  
+  // let ticket = {};
+  // var skipVal, limitVal;
+  
+  // if(isNaN(parseInt(req.query.offset))) skipVal = 0;
+  // else skipVal = parseInt(req.query.offset);
+
+  // if(isNaN(parseInt(req.query.limit))) limitVal = 500;
+  // else limitVal = parseInt(req.query.limit);
+
+  
+  // if(req.query.reference) {
+  //   var regexName = new RegExp(req.query.reference, "i");
+  //   ticket.reference = regexName;
+  // }
+  
+  // if(req.query.userId) ticket.user = req.query.user
+  // if(req.query.categoryId) ticket.category = req.query.category
+  // if(req.query.workflowId) ticket.workflow = req.query.workflow
+  // if(req.query.phaseId) ticket.phase = req.query.phase
+  // if(req.query.status) ticket.status = req.query.status
+
+  // let ticketList = await Ticket.aggregate([
+  //   { $match: ticket },
+  //   { $sort: { insertDate: -1 } },
+  //   { $skip: skipVal },
+  //   { $limit: limitVal },
+  //   { $lookup: { from: "user", localField: "id", foreignField: "userid", as: "userData" } },
+  //   { $lookup: { from: "phase", localField: "id", foreignField: "phaseId", as: "phaseData" } },
+  //   { $lookup: { from: "workflow", localField: "id", foreignField: "workflowId", as: "workflowData" } },
+  //   { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
+  //   { $project : {
+  //       _id:0,
+  //       reference: 1,
+  //       code: 1,
+  //       user: { $arrayElemAt: [ "$userData.firstname", 0] },
+  //       workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
+  //       phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
+  //       category: { $arrayElemAt: [ "$categoryData.reference", 0] },
+  //       userId: 1,
+  //       workflowid: 1,
+  //       phaseId: 1,
+  //       categoryId: 1,
+  //       insertDate: 1,
+  //       creationDate: 1,   
+  //   }}
+  // ])
+
+  response.withData(res,  phases);
+
+});
 
 
 module.exports = router

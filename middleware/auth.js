@@ -19,6 +19,7 @@ adminAuth = async function (req, res, next) {
 
   let reqUserId = "";
   // const token = req.header("Authorization");
+  if(!req.headers.authorization) return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
   const token = req.headers.authorization.split(' ')[1];
 
   if (!token) 
@@ -61,6 +62,7 @@ userAuth = async function (req, res, next) {
   let reqUserId = "";
   
   // const token = req.header("Authorization");
+  if(!req.headers.authorization) return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
   const token = req.headers.authorization.split(' ')[1];
   console.log(token);
 

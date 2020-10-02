@@ -13,6 +13,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         department = await Department.findById(id);
+        if(!department) return response.error(res, "Department not found");
         console.log(department);
         return response.withData(res, department);
     } catch (error) {
@@ -42,7 +43,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validateDepartmentPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name, hod } = req.body;
+    const { name, hod, deputyhod, description } = req.body;
 
     try {
         let departmentExists = await Department.findOne({ name });
@@ -50,7 +51,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
         }
 
-        department = await Department.create({ name, hod });
+        department = await Department.create({ name, hod, deputyhod, description });
         return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_CREATED);
 
     } catch (error) {
@@ -74,7 +75,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let departmentExists = await Department.findById(id);
         if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
 
-        department = await Department.updateOne({ name, hod });
+        department = await departmentExists.updateOne({ name, hod });
         return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_UPDATED);
 
     } catch (error) {
@@ -82,6 +83,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     }
     
 });
+
 
 // Delete department
 router.delete("/:id", adminAuth, async (req, res) => {
@@ -96,8 +98,5 @@ router.delete("/:id", adminAuth, async (req, res) => {
         return response.error(res, error.message);
     }
 });
-
-
-
 
 module.exports = router;

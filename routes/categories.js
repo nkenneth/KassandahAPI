@@ -13,6 +13,7 @@ router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         category = await Category.findById(id);
+        if(!category) return response.error(res, "Category not found");
         console.log(category);
         return response.withData(res, category);
     } catch (error) {
@@ -42,7 +43,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validateCategoryPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name } = req.body;
+    const { name, description, workflow } = req.body;
 
     try {
         let categoryExists = await Category.findOne({ name });
@@ -50,7 +51,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, CATEGORY_CONSTANTS.CATEGORY_EXISTS);
         }
 
-        category = await Category.create({ name });
+        category = await Category.create({ name, description, workflow });
         return response.success(res, CATEGORY_CONSTANTS.CATEGORY_CREATED);
 
     } catch (error) {
@@ -65,13 +66,13 @@ router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateCategoryPatch(req.body);
     if (error) return response.error(res, error.details[0].message); 
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, description, workflow } = req.body;
 
     try {
         let categoryExists = await Category.findById(id);
         if (!categoryExists) return response.error(res, CATEGORY_CONSTANTS.CATEGORY_NOT_FOUND);
 
-        category = await Category.updateOne({ name });
+        category = await categoryExists.updateOne({ name, description, workflow });
         return response.success(res, CATEGORY_CONSTANTS.CATEGORY_UPDATED);
 
     } catch (error) {
