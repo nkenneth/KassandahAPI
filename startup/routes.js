@@ -28,6 +28,6 @@ module.exports = function (app) {
   app.use("/api/vendor", vendors);
   app.use("/api/role", roles);
   app.use("/api/s3upload", s3upload);
-  app.get("/", (req, res) => { res.json({status: true, message: "Welcome to Kassandah API :)"}) });
   app.use(error);
+  app.get("/", (req, res) => { res.json({status: true, message: "Welcome to Kassandah API :)"}) });
 };

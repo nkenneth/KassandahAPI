@@ -73,7 +73,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let vendorExists = await Vendor.findById(id);
         if (!vendorExists) return response.error(res, VENDOR_CONSTANTS.VENDOR_NOT_FOUND);
 
-        vendor = await Vendor.updateOne({ name });
+        vendor = await vendorExists.updateOne({ name });
         return response.success(res, VENDOR_CONSTANTS.VENDOR_UPDATED);
 
     } catch (error) {

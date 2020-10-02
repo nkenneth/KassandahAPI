@@ -74,7 +74,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let workflowExists = await Workflow.findById(id);
         if (!workflowExists) return response.error(res, WORKFLOW_CONSTANTS.WORKFLOW_NOT_FOUND);
 
-        workflow = await Workflow.updateOne({ name, user, sla, isDynamic });
+        workflow = await workflowExists.updateOne({ name, user, sla, isDynamic });
         return response.success(res, WORKFLOW_CONSTANTS.WORKFLOW_UPDATED);
 
     } catch (error) {

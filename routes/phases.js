@@ -74,7 +74,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let phaseExists = await Phase.findById(id);
         if (!phaseExists) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
 
-        phase = await Phase.updateOne({ name, phaseType, approver, sla, isDynamic });
+        phase = await phaseExists.updateOne({ name, phaseType, approver, sla, isDynamic });
         return response.success(res, PHASE_CONSTANTS.PHASE_UPDATED);
 
     } catch (error) {

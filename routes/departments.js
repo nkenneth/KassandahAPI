@@ -25,7 +25,7 @@ router.get("/:id", async (req, res) => {
 
 
 // Get Department List
-router.get("/", userAuth, async (req, res) => {
+router.get("/", async (req, res) => {
 
     try {
         departmentList = await Department.find({});
@@ -75,7 +75,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let departmentExists = await Department.findById(id);
         if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
 
-        department = await Department.updateOne({ name, hod });
+        department = await departmentExists.updateOne({ name, hod });
         return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_UPDATED);
 
     } catch (error) {

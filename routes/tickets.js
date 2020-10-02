@@ -154,9 +154,11 @@ router.get("/:id", async (req, res) => {
 router.get("/approval/pending", userAuth, async (req, res) => {
   
   let ticket = {};
-  
+
   // user = req.jwtData.userId;
   phases = await Phase.find({approver: req.jwtData.userId});
+
+  // function 
 
   // phases = Phase.find({email: req.jwtData.email});
   // console.log( phases)

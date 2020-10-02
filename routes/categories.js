@@ -72,7 +72,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
         let categoryExists = await Category.findById(id);
         if (!categoryExists) return response.error(res, CATEGORY_CONSTANTS.CATEGORY_NOT_FOUND);
 
-        category = await Category.updateOne({ name, description, workflow });
+        category = await categoryExists.updateOne({ name, description, workflow });
         return response.success(res, CATEGORY_CONSTANTS.CATEGORY_UPDATED);
 
     } catch (error) {
