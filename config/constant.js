@@ -69,7 +69,9 @@ const TICKET_CONSTANTS = {
   TICKET_DELETED: "Ticket deleted successfully",
   TICKET_UPDATED: "Ticket updated successfully",
   TICKET_EXPIRED: "Ticket expired",
-  TICKET_NOT_FOUND: "Ticket NOT found"
+  TICKET_NOT_FOUND: "Ticket NOT found",
+  TICKET_WORKFLOW_ERROR: "Error occured while processing ticket workflow",
+  TICKET_PHASE_ERROR: "Error occured while processing ticket phase"
 };
 
 const CATEGORY_CONSTANTS = {

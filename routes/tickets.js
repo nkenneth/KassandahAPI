@@ -19,6 +19,7 @@ const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
 const { sendPhaseApprovalMail } = require("../services/amazonSes");
 const { Z_NEED_DICT } = require("zlib");
+const { WorkMailMessageFlow } = require("aws-sdk");
 
 
 // mongoose.set("debug", true);
@@ -119,46 +120,38 @@ router.post("/", userAuth, upload, async (req, res) => {
 });
 
 
-//Get Ticket List
-router.get("/", userAuth, async (req, res)=> {
-  try {
-    ticketList = await Ticket.find({});
-    console.log(ticketList);
-    return response.withData(res, ticketList);
-  } catch (error) {
-      console.log(error);
-      return response.error(res, error.message);
-  }
+// Get ticket list awaiting approval by authenticated user
+router.get("/pending", userAuth, async (req, res) => {
   
-})
-
-
-
-// Get  Single Ticket
-router.get("/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-      ticket = await Ticket.findById(id);
-      if(!ticket) return response.error(res, "Ticket not found");
-      console.log(ticket);
-      return response.withData(res, ticket);
-  } catch (error) {
-      return response.error(res, error.message);
-  }
-  
-});
-
-
-
-// Get ticket list awaiting approval
-router.get("/approval/pending", userAuth, async (req, res) => {
-  
-  let ticket = {};
-
-  // user = req.jwtData.userId;
+  // get phases belonging to user
   phases = await Phase.find({approver: req.jwtData.userId});
 
-  // function 
+  async function getMatchingTickets(phaseId) {
+    const matchingTicket = await Ticket.find({phase: phaseId, phaseStatus: 'pending'})
+    console.log(matchingTicket)
+    return matchingTicket
+  }  
+
+  const tickets = [];
+
+  // get matching tickets
+  for(const phase of phases) {
+    tickets.push( await getMatchingTickets(phase._id))
+  }
+
+  {
+  // tickets = Ticket.find({})
+
+  // ticket.phase = phases.forEach
+
+  // get all tickets with user as approver
+  // tickets = await Ticket.aggregate([
+  //   { $match: ticket },
+  //   { $sort: { insertDate: -1 } },
+  //   { $skip: skipVal },
+  //   { $limit: limitVal },
+
+  // ]);
 
   // phases = Phase.find({email: req.jwtData.email});
   // console.log( phases)
@@ -213,9 +206,169 @@ router.get("/approval/pending", userAuth, async (req, res) => {
   //       creationDate: 1,   
   //   }}
   // ])
+  }
+  
+  response.withData(res,  { phases, tickets });
 
-  response.withData(res,  phases);
+});
 
+
+// Get Ticket List
+router.get("/", userAuth, async (req, res)=> {
+  try {
+    ticketList = await Ticket.find({});
+    console.log(ticketList);
+    return response.withData(res, ticketList);
+  } catch (error) {
+      console.log(error);
+      return response.error(res, error.message);
+  }
+  
+})
+
+
+// Get  Single Ticket
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+      ticket = await Ticket.findById(id);
+      if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+      console.log(ticket);
+      return response.withData(res, ticket);
+  } catch (error) {
+      return response.error(res, error.message);
+  }
+  
+});
+
+
+// Get ticket list awaiting approval by authenticated user
+router.get("/pending", userAuth, async (req, res) => {
+  
+  // get phases belonging to user
+  phases = await Phase.find({approver: req.jwtData.userId});
+
+  async function getMatchingTickets(phaseId) {
+    const matchingTicket = await Ticket.find({phase: phaseId, phaseStatus: 'pending'})
+    console.log(matchingTicket)
+    return matchingTicket
+  }  
+
+  const tickets = [];
+
+  // get matching tickets
+  for(const phase of phases) {
+    tickets.push( await getMatchingTickets(phase._id))
+  }
+
+  {
+  // tickets = Ticket.find({})
+
+  // ticket.phase = phases.forEach
+
+  // get all tickets with user as approver
+  // tickets = await Ticket.aggregate([
+  //   { $match: ticket },
+  //   { $sort: { insertDate: -1 } },
+  //   { $skip: skipVal },
+  //   { $limit: limitVal },
+
+  // ]);
+
+  // phases = Phase.find({email: req.jwtData.email});
+  // console.log( phases)
+
+  // if(!phases) return response.error(res)
+
+  // to get a phase that is due for approval we will nned -> ticketphase, phasestatus, 
+  
+  // let ticket = {};
+  // var skipVal, limitVal;
+  
+  // if(isNaN(parseInt(req.query.offset))) skipVal = 0;
+  // else skipVal = parseInt(req.query.offset);
+
+  // if(isNaN(parseInt(req.query.limit))) limitVal = 500;
+  // else limitVal = parseInt(req.query.limit);
+
+  
+  // if(req.query.reference) {
+  //   var regexName = new RegExp(req.query.reference, "i");
+  //   ticket.reference = regexName;
+  // }
+  
+  // if(req.query.userId) ticket.user = req.query.user
+  // if(req.query.categoryId) ticket.category = req.query.category
+  // if(req.query.workflowId) ticket.workflow = req.query.workflow
+  // if(req.query.phaseId) ticket.phase = req.query.phase
+  // if(req.query.status) ticket.status = req.query.status
+
+  // let ticketList = await Ticket.aggregate([
+  //   { $match: ticket },
+  //   { $sort: { insertDate: -1 } },
+  //   { $skip: skipVal },
+  //   { $limit: limitVal },
+  //   { $lookup: { from: "user", localField: "id", foreignField: "userid", as: "userData" } },
+  //   { $lookup: { from: "phase", localField: "id", foreignField: "phaseId", as: "phaseData" } },
+  //   { $lookup: { from: "workflow", localField: "id", foreignField: "workflowId", as: "workflowData" } },
+  //   { $lookup: { from: "category", localField: "id", foreignField: "categoryId", as: "categoryData" } },
+  //   { $project : {
+  //       _id:0,
+  //       reference: 1,
+  //       code: 1,
+  //       user: { $arrayElemAt: [ "$userData.firstname", 0] },
+  //       workflow: { $arrayElemAt: ["$workflowData.reference", 0] },
+  //       phase: { $arrayElemAt: [ "$phaseData.reference", 0] },
+  //       category: { $arrayElemAt: [ "$categoryData.reference", 0] },
+  //       userId: 1,
+  //       workflowid: 1,
+  //       phaseId: 1,
+  //       categoryId: 1,
+  //       insertDate: 1,
+  //       creationDate: 1,   
+  //   }}
+  // ])
+  }
+  
+  response.withData(res,  { phases, tickets });
+
+});
+
+
+router.post("/approve/:id", async (req, res) => {
+  const { id } = req.params;
+
+  try {
+
+    //get ticket and forward or mark as approved
+    ticket = await Ticket.findById(id);
+    if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+    console.log(ticket);
+    
+    workflow = await Workflow.findById(ticket.workflow);
+    if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
+
+    phaseCount = workflow.phases.length
+    console.log("COUNT: " + phaseCount)
+
+    currentPhase = workflow.phases.indexOf(ticket.phase) + 1;
+    if(currentPhase == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
+    console.log("PHASE IS " + currentPhase);
+    
+    phase = await Phase.findById(workflow.phase[currentPhase]);
+    if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+
+    ticket.phase = workflow.phase[currentPhase];
+
+    // send mail to next phase approver
+    approver
+
+
+    return response.withData(res, { ticket, currentPhase, phaseCount });
+
+  } catch (error) {
+      return response.error(res, error.message);
+  }
 });
 
 
