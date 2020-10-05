@@ -10,7 +10,7 @@ const UserSchema = new mongoose.Schema({
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true }],
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
-    phone: { type: String, default: "", unique: true },
+    phone: { type: String, unique: true },
     email: { type: String, default: "", required: true, unique: true },
     password: { type: String, default: "" },
     resetPasswordToken: { type: String },

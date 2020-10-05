@@ -340,7 +340,7 @@ router.post("/approve/:id", async (req, res) => {
 
   try {
 
-    //get ticket and forward or mark as approved
+    // get ticket and forward or mark as approved
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     console.log(ticket);
@@ -348,23 +348,25 @@ router.post("/approve/:id", async (req, res) => {
     workflow = await Workflow.findById(ticket.workflow);
     if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
-    phaseCount = workflow.phases.length
+    let phaseCount = workflow.phases.length
     console.log("COUNT: " + phaseCount)
 
-    currentPhase = workflow.phases.indexOf(ticket.phase) + 1;
+    let currentPhase = workflow.phases.indexOf(ticket.phase) + 1;
     if(currentPhase == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
     console.log("PHASE IS " + currentPhase);
-    
-    phase = await Phase.findById(workflow.phase[currentPhase]);
+    console.log(workflow.phases[1])
+    phase = await Phase.findById(workflow.phases[currentPhase]);
     if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
 
-    ticket.phase = workflow.phase[currentPhase];
+    ticket.phase = workflow.phases[currentPhase];
+
+    ticket.save();
 
     // send mail to next phase approver
-    approver
+    // approver
 
 
-    return response.withData(res, { ticket, currentPhase, phaseCount });
+    return response.success(res);
 
   } catch (error) {
       return response.error(res, error.message);
