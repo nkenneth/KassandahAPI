@@ -115,12 +115,11 @@ async function sendUserVerificationMail(email, username, token) {
       },
       Subject: {
         Charset: "UTF-8",
-        // Data: config.get("email.otpSubject"),
         Data: "Verify your email",
       },
     },
-    Source: "anselm.mba@thegiggroupng.com",
-    // Source: config.get("email.senderId"),
+    // Source: "anselm.mba@thegiggroupng.com",
+    Source: config.get("ses.senderId"),
   };
   try {
     const result = await ses.sendEmail(msg).promise();
