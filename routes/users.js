@@ -189,8 +189,11 @@ router.post("/", async (req, res) => {
     });
     const queueName = "email-verification"
     const payload = "Welcome to GIG PAYFLOW now KASSANDAH"
+    var host = req.get('host');
+    console.log(`host url is: ${host}`);
+    callback_url = `${host}api/user/verify${token.token}`;
     // await publishToQueue(queueName, payload);
-    sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+    sendUserVerificationMail(user.email, user.firstName, callback_url);
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     
