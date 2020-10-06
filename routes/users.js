@@ -301,9 +301,9 @@ router.post("/resend", async (req, res) => {
   token.save(function (err) {
       if (err) return response.error(res, err.message, 500); 
   });
-  var host = req.get('host');
+  var host = config.get("app_domain");
   console.log(`host url is: ${host}`);
-  callback_url = `${host}api/user/verify${token.token}`;
+  callback_url = `${host}api/user/verify/${token.token}`;
   await sendUserVerificationMail(user.email, user.firstName, callback_url);
 
   return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
