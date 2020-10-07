@@ -257,7 +257,7 @@ router.get("/verify/:token", async (req, res) => {
   const { token } = req.params; 
   if(!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
-  console.log("token isssss:::::" + reqToken);
+  console.log("token isssss:::::" + token);
 
   // Find a matching token
   Token.findOne({ token }, function (err, token) {
