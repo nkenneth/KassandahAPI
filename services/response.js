@@ -40,4 +40,5 @@ function redirect(res, url = config.get("app_domain"), msg = null) {
 module.exports.success = success
 module.exports.withData = withData
 module.exports.error = error
+module.exports.redirect = redirect
 module.exports.validationErrors = validationErrors
