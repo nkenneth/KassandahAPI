@@ -254,31 +254,33 @@ router.put("/", userAuth, async (req, res) => {
 //verify email
 router.get("/verify/:token", async (req, res) => {
   
-  const { token } = req.params; 
-  if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
-  console.log("token isssss:::::" + token);
+  const { reqToken } = req.params; 
+  if(!reqToken) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  console.log("token isssss:::::" + reqToken);
 
   // Find a matching token
-  Token.findOne({ token }, function (err, token) {
-    if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  Token.findOne({ reqToken }, function (err, token) {
+    if (!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+    // if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
     
     // If we found a token, find a matching user
     User.findOne({ _id: token._userId }, function (err, user) {
-        if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
-        if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+        if (!user) return response.redirect(res, USER_CONSTANTS.INVALID_USER); 
+        // if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
+        if (user.isVerified) return response.redirect(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+        // if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
 
         // Verify and save the user
         user.isVerified = true;
         user.status = "active";
         user.save(function (err) {
-            if (err) { return response.error(res, err.message); }
-            return response.success(res, USER_CONSTANTS.VERIFICATION_SUCCESS);
+            if (err) return response.error(res, err.message); 
+            return response.redirect(res);
         });
     });
   });
 });
-
-
 
 //resend verify email
 router.post("/resend", async (req, res) => {
@@ -309,9 +311,6 @@ router.post("/resend", async (req, res) => {
   return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
 
 });
-
-
-
 
 // User login api
 router.post("/login", async (req, res) => {
@@ -381,8 +380,7 @@ router.post("/password/change", userAuth, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   const validPassword = await bcrypt.compare(oldPassword, user.password);
-  if (!validPassword)
-    return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
+  if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
 
   //create salt for user password hash
   const salt = await bcrypt.genSalt(10);

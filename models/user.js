@@ -102,6 +102,7 @@ function validateChangePassword(user) {
     const schema = {
         oldPassword: Joi.string().min(1).max(200).required(),
         newPassword: Joi.string().min(1).max(200).required(),
+        confirmNewPassword: Joi.any().valid(Joi.ref('newPassword')).required().options({ language: { any: { allowOnly: 'must match newPassword' } } })
     };
     return Joi.validate(user, schema);
 }
