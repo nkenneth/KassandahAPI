@@ -254,13 +254,13 @@ router.put("/", userAuth, async (req, res) => {
 //verify email
 router.get("/verify/:token", async (req, res) => {
   
-  const { reqToken } = req.params; 
-  if(!reqToken) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  const { token } = req.params; 
+  if(!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   console.log("token isssss:::::" + reqToken);
 
   // Find a matching token
-  Token.findOne({ reqToken }, function (err, token) {
+  Token.findOne({ token }, function (err, token) {
     if (!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
     // if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
     
