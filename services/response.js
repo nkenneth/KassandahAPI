@@ -1,4 +1,6 @@
 
+const config = require("config");
+
 
 function validationErrors(res, payload = {}) {
     return res.status(422).json({
