@@ -1,3 +1,5 @@
+// TODO: Clean up worker and setup notifications
+
 // // import amqp from 'amqplib/callback_api';
 // const amqp =  require('amqplib/callback_api');
 // const CONN_URL = 'amqps://yzhrvflq:Yl7a71T_yJ6KYXg4JezXVYYdArIJUGPQ@rattlesnake.rmq.cloudamqp.com/yzhrvflq';

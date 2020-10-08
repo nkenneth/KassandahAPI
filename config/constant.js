@@ -70,6 +70,7 @@ const TICKET_CONSTANTS = {
   TICKET_UPDATED: "Ticket updated successfully",
   TICKET_EXPIRED: "Ticket expired",
   TICKET_NOT_FOUND: "Ticket NOT found",
+  TICKET_TREATED: "Ticket ALREADY treated",
   TICKET_WORKFLOW_ERROR: "Error occured while processing ticket workflow",
   TICKET_PHASE_ERROR: "Error occured while processing ticket phase"
 };

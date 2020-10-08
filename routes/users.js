@@ -251,7 +251,7 @@ router.put("/", userAuth, async (req, res) => {
   res.send({ statusCode: 200, message: "Success", data: response });
 });
 
-//verify email
+// verify email
 router.get("/verify/:token", async (req, res) => {
   
   const { token } = req.params; 
@@ -282,7 +282,7 @@ router.get("/verify/:token", async (req, res) => {
   });
 });
 
-//resend verify email
+// resend verify email
 router.post("/resend", async (req, res) => {
  
   // Check for validation errors    
