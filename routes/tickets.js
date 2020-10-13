@@ -40,6 +40,101 @@ const storage = multer.diskStorage({
 let upload = multer({ storage: storage, fileFilter: fileService.documentFilter }).array('documents', 5);
 
 
+// Update ticket
+router.patch("/:id", userAuth, upload, async (req, res) => { 
+  const { error } = validateTicketPatch(req.body)
+  if (error) return response.validationErrors(res, error.details[0].message);
+
+  console.log('IGGGOOOOTTTHHHEEERRREE')
+
+  if (req.fileValidationError) {
+    req.files.forEach( (file) => { fs.unlinkSync(file.path) })
+    return response.error(res, req.fileValidationError);
+  }
+
+  if (!req.files) {
+    return response.error(res, 'Please select a document to upload');
+  }
+
+  const { id } = req.params;
+
+  let ticket = await Ticket.findById(id);
+  if (!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+  
+  //set userId
+  user = await User.findOne({email: req.jwtData.email});
+  if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+  const userId = user._id;
+
+  if (ticket.userId != userId) return response.error(res, TICKET_CONSTANTS.TICKET_WRONG_OWNER);
+
+  // save comments if exists
+  if (req.body.comment) {
+    comment = new Comment({ comment: comment, user: userId, ticket: ticket._id })
+    await comment.save();
+  }
+  
+  // collect reference from invoice and make lowercase
+  const ref = req.body.ref.toLowerCase();
+
+  const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
+
+  const retainPhase = false;
+  if (ticket.category == category) retainPhase = true;
+
+  try {
+
+    if(retainPhase) {
+      // Update ticket entity
+      updateTicket = await ticket.updateOne({ 
+        ref, category, department, description, vendor, numberOfItems, items, dueDate, amount
+      });
+
+      const phaseModel = await Phase.findById(ticket.phase);
+      const approverEmail = await User.findById(phaseModel.approver).email;
+    } else {
+       // Fetch ticket category
+      const categoryModel = await Category.findById(category);
+      console.log(categoryModel);
+
+      // Fetch ticket workflow
+      const workflowModel = await Workflow.findById(categoryModel.workflow);
+      const workflow = workflowModel._id;
+      console.log(workflow);
+
+      // Set ticket current phase 
+      const phase = workflowModel.phases[0];
+
+      // Update ticket entity
+      updateTicket = await ticket.updateOne({ 
+        ref, category, department, description, vendor, workflow, phase, 
+        numberOfItems, items, dueDate, amount
+      });
+
+
+      // Fetch phase model and email approver
+      const phaseModel = await Phase.findById(phase);
+      const approverEmail = await User.findById(phaseModel.approver).email;
+    }
+
+   
+
+    //  TODO: sendTicketApprovalEmail()
+    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+
+    // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
+    let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
+
+    return response.withData(res, result);
+
+  } catch (error) {
+    console.error(error.message);
+    return response.error(res, error.message, 400);
+  }
+});
+
+
+
 // Create ticket
 router.post("/", userAuth, upload, async (req, res) => { 
   const { error } = validateTicketPost(req.body)
@@ -117,86 +212,6 @@ router.post("/", userAuth, upload, async (req, res) => {
     return response.error(res, error.message, 500);
   }
 });
-
-
-// Update ticket
-router.patch("/", userAuth, upload, async (req, res) => { 
-  const { error } = validateTicketPost(req.body)
-  if (error) return response.validationErrors(res, error.details[0].message);
-
-  if(req.fileValidationError) {
-    req.files.forEach( (file) => { fs.unlinkSync(file.path) })
-    return response.error(res, req.fileValidationError);
-  }
-
-  if (!req.files) {
-    return response.error(res, 'Please select a document to upload');
-  }
-
-
-  // collect reference from invoice and make lowercase
-  const ref = req.body.ref;
-  
-  //set userId
-  user = await User.findOne({email: req.jwtData.email});
-  if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
-  const userId = user._id;
-  
-  let isPossibleDuplicate = false;
-
-  const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
-
-  // mitigate duplicate ticket issuing
-  payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
-
-  // if (payload.ref_match == true) return response.error(res, TICKET_CONSTANTS.DUPLICATE_TICKET);
-  if (payload.score >= 50) isPossibleDuplicate = true;
-
-  try {
-    // Generate ticket reference
-    const ticketRef = `${Date.now()}${ref}`;
-
-    // Fetch ticket category
-    const categoryModel = await Category.findById(category);
-    console.log(categoryModel);
-
-    // Fetch ticket workflow
-    const workflowModel = await Workflow.findById(categoryModel.workflow);
-    const workflow = workflowModel._id;
-    console.log(workflow);
-
-    // Set ticket current phase 
-    const phase = workflowModel.phases[0];
-
-    // Instatiate ticket entity
-    ticket = new Ticket({ 
-      ref, ticketRef, user: userId, category, department, 
-      description, vendor, workflow, phase, numberOfItems, 
-      items, dueDate, amount, isPossibleDuplicate
-    });
-
-    // Persit ticket
-    await ticket.save();
-
-    // Fetch phase model and email approver
-    const phaseModel = await Phase.findById(phase);
-    const approverEmail = await User.findById(phaseModel.approver).email;
-
-    //  TODO: sendTicketApprovalEmail()
-    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
-
-    // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
-    let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
-
-    // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
-    return response.withData(res, result);
-
-  } catch (error) {
-    console.error(error.message);
-    return response.error(res, error.message, 500);
-  }
-});
-
 
 
 // Get ticket list awaiting approval by authenticated user

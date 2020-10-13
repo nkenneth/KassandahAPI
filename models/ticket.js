@@ -54,20 +54,24 @@ function validateTicketPost(ticket) {
         category: Joi.string().required(),
         department: Joi.string().required(),
         dueDate: Joi.date().min('now').iso().required(),
-        amount: Joi.number().min(0).required()
+        amount: Joi.number().min(0).required(),
+        comment: Joi.string()
     };
     return Joi.validate(ticket, schema);
 }
 
 function validateTicketPatch(ticket) {
     const schema = {
-        item: Joi.string().min(2).max(200).required(),
-        reference: Joi.number().required(),
-        userId: Joi.required(),
-        phaseid: Joi.required(),
-        workflowId: Joi.required(),
-        categoryId: Joi.required(),
-        status: Joi.string().valid(["open", "closed", "blocked"])
+        ref: Joi.string().min(2).max(200).required(),
+        items: Joi.string().min(2).max(200).required(),
+        numberOfItems: Joi.number().min(0).max(200).required(),
+        vendor: Joi.string().required(),
+        description: Joi.string().required(),
+        category: Joi.string().required(),
+        department: Joi.string().required(),
+        dueDate: Joi.date().min('now').iso().required(),
+        amount: Joi.number().min(0).required(),
+        comment: Joi.string()
     };
     return Joi.validate(ticket, schema);
 }

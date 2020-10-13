@@ -55,6 +55,18 @@ function validateUserPost(user) {
     return Joi.validate(user, schema);
 }
 
+function validateUserPostByAdmin(user) {
+    const schema = {
+        role: Joi.string().required(),
+        firstName: Joi.string().min(2).max(200).required(),
+        lastName: Joi.string().min(2).max(200).required(),
+        password: Joi.string().min(6).max(20).required(),
+        email: Joi.string().email().required(),
+        phone: Joi.string()
+    };
+    return Joi.validate(user, schema);
+}
+
 function validateEmail(user) {
     const schema = {
         email: Joi.string().email().required()
@@ -64,8 +76,8 @@ function validateEmail(user) {
 
 function validateUserPut(user) {
     const schema = {
-        userId: Joi.string().min(1).max(200),
         role: Joi.string(),
+        userId: Joi.string().min(1).max(200),
         firstName: Joi.string().min(2).max(200),
         lastName: Joi.string().min(2).max(200),
         email: Joi.string().email(),
@@ -127,6 +139,7 @@ function validateRefreshToken(user) {
 module.exports.User = User;
 module.exports.UserAudit = UserAudit;
 module.exports.validateUserPost = validateUserPost;
+module.exports.validateUserPostByAdmin = validateUserPostByAdmin;
 module.exports.validateUserPut = validateUserPut;
 module.exports.validateEmail = validateEmail;
 module.exports.validateUserListGet = validateUserListGet;
