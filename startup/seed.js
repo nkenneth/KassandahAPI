@@ -11,6 +11,10 @@ module.exports = async () => {
   var roleUser = await Role.findOne({role:"user"});
   // console.log(roleUserExists)
   if(!roleUser) roleUser = await Role.create({ role: "user", status: "active" });
+
+  var roleHOD = await Role.findOne({role:"hod"});
+  // console.log(roleHODExists)
+  if(!roleHOD) roleHOD = await Role.create({ role: "hod", status: "active" });
   
 
   const userExists = await User.findOne({ email: "anselm.mba@pap.com", phone: "0123456789", status: "active" });

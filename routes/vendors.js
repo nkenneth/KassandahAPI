@@ -43,7 +43,7 @@ router.post("/", adminAuth, async (req, res) => {
     const { error } = validateVendorPost(req.body);
     if (error) return response.error(res, error.details[0].message); 
 
-    const { name, address, state, email, phone } = req.body;
+    const { name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified } = req.body;
 
     try {
         let vendorExists = await Vendor.findOne({ $or: [{ name }, {email}, {phone}]  });
@@ -51,7 +51,7 @@ router.post("/", adminAuth, async (req, res) => {
             return response.error(res, VENDOR_CONSTANTS.VENDOR_EXISTS);
         }
 
-        vendor = await Vendor.create({ name, address, state, email, phone });
+        vendor = await Vendor.create({ name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified });
         return response.success(res, VENDOR_CONSTANTS.VENDOR_CREATED);
 
     } catch (error) {
@@ -67,13 +67,13 @@ router.patch("/:id", adminAuth, async (req, res) => {
     if (error) return response.error(res, error.details[0].message); 
     
     const { id } = req.params;
-    const { name } = req.body;
+    const { name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified } = req.body;
 
     try {
         let vendorExists = await Vendor.findById(id);
         if (!vendorExists) return response.error(res, VENDOR_CONSTANTS.VENDOR_NOT_FOUND);
 
-        vendor = await vendorExists.updateOne({ name });
+        vendor = await vendorExists.updateOne({ name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified });
         return response.success(res, VENDOR_CONSTANTS.VENDOR_UPDATED);
 
     } catch (error) {

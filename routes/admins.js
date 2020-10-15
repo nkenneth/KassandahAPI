@@ -37,9 +37,9 @@ router.post("/user", adminAuth, async (req, res) => {
     }
   
     const email = req.body.email.toLowerCase();
-    const { firstName, lastName, phone, password, role } = req.body;
+    const { firstName, lastName, phone, password, department, role } = req.body;
   
-    console.log( { firstName, lastName, phone, password, email, role } );
+    console.log( { firstName, lastName, phone, password, email, department, role } );
   
     try {
   
@@ -49,7 +49,7 @@ router.post("/user", adminAuth, async (req, res) => {
       if(!roleModel) return response.error(res, ROLE_CONSTANTS.NOT_FOUND);
 
       //instantiate User model
-      user = new User({ firstName, lastName, email, phone, password, roles: roleModel._id, status:"inactive" });
+      user = new User({ firstName, lastName, email, phone, password, department, roles: roleModel._id, status:"inactive" });
   
       //create salt for user password hash
       const salt = await bcrypt.genSalt(10);

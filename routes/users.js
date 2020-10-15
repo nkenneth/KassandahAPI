@@ -32,7 +32,7 @@ const { userAuth } = require("../middleware/auth");
 mongoose.set("debug", true);
 
 // Get user list
-router.get("/", userAuth, async (req, res) => {
+router.get("/", adminAuth, async (req, res) => {
   let criteria = {};
   var skipVal, limitVal;
   if (isNaN(parseInt(req.query.offset))) skipVal = 0;
@@ -41,9 +41,13 @@ router.get("/", userAuth, async (req, res) => {
   if (isNaN(parseInt(req.query.limit))) limitVal = 500;
   else limitVal = parseInt(req.query.limit);
 
-  if (req.query.fullName) {
-    var regexName = new RegExp(req.query.fullName, "i");
-    criteria.fullName = regexName;
+  if (req.query.firstName) {
+    var regexName = new RegExp(req.query.firstName, "i");
+    criteria.firstName = regexName;
+  }
+  if (req.query.lastName) {
+    var regexName = new RegExp(req.query.lastName, "i");
+    criteria.lastName = regexName;
   }
   if (req.query.email) criteria.email = req.query.email;
   if (req.query.phone) criteria.phone = req.query.phone;
@@ -72,21 +76,19 @@ router.get("/", userAuth, async (req, res) => {
     { $sort: { insertDate: -1 } },
     { $skip: skipVal },
     { $limit: limitVal },
-    { $lookup: { from: "states", localField: "stateId", foreignField: "stateId", as: "stateData" } },
     {
       $project: {
         _id: 0,
         userId: "$_id",
-        role: 1,
-        fullName: 1,
+        roles: 1,
+        firstName: 1,
+        lastName: 1,
         email: 1,
         phone: 1,
-        address: 1,
+        department: 1,
+        isVerified: 1,
         status: 1,
-        stateName: { $arrayElemAt: ["$stateData.name", 0] },
-        stateCode: { $arrayElemAt: ["$stateData.code", 0] },
-        stateId: 1,
-        address: 1,
+        profilePic: 1,
         createdBy: 1,
         modifiedBy: 1,
         lastLogin: 1,
@@ -159,9 +161,9 @@ router.post("/", async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
-  const { firstName, lastName, phone, password } = req.body;
+  const { firstName, lastName, phone, password, department } = req.body;
 
-  console.log( { firstName, lastName, phone, password, email } );
+  console.log( { firstName, lastName, phone, password, email, department } );
 
   try {
 
@@ -169,7 +171,7 @@ router.post("/", async (req, res) => {
     role = await Role.findOne({ role: "user" });
 
     //instantiate User model
-    user = new User({ firstName, lastName, email, phone, password, roles: role._id, status:"inactive" });
+    user = new User({ firstName, lastName, email, phone, password, department, roles: role._id, status:"inactive" });
 
     //create salt for user password hash
     const salt = await bcrypt.genSalt(10);
@@ -187,11 +189,13 @@ router.post("/", async (req, res) => {
     token.save(function (err) {
         if (err) return response.error(res, err.message, 500); 
     });
+
     const queueName = "email-verification"
     const payload = "Welcome to GIG PAYFLOW now KASSANDAH"
     var host = config.get("app_domain");
     console.log(`host url is: ${host}`);
     callback_url = `${host}api/user/verify/${token.token}`;
+
     // await publishToQueue(queueName, payload);
     sendUserVerificationMail(user.email, user.firstName, callback_url);
 
@@ -201,7 +205,6 @@ router.post("/", async (req, res) => {
     console.error(err.message);
     return response.error(res, err.message, 500);
   }
-
 });
 
 // Update existing user
@@ -246,7 +249,7 @@ router.put("/", userAuth, async (req, res) => {
   await user.save();
   user.userId = user._id;
 
-  let response = _.pick(user, ["userId", "fullName", "phone", "email", "address", "status"]);
+  let response = _.pick(user, ["userId", "firstName", "lastName", "phone", "email", "address", "status"]);
 
   res.send({ statusCode: 200, message: "Success", data: response });
 });

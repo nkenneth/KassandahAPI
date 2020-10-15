@@ -10,6 +10,7 @@ const UserSchema = new mongoose.Schema({
     roles: [{ type: mongoose.Schema.Types.ObjectId, ref: "Role", required: true }],
     firstName: { type: String, default: "" },
     lastName: { type: String, default: "" },
+    department: { type: mongoose.Schema.Types.ObjectId, ref: "Department"},
     phone: { type: String, default: "" },
     email: { type: String, default: "", required: true, unique: true },
     password: { type: String, default: "" },
@@ -50,7 +51,8 @@ function validateUserPost(user) {
         lastName: Joi.string().min(2).max(200).required(),
         password: Joi.string().min(6).max(20).required(),
         email: Joi.string().email().required(),
-        phone: Joi.string()
+        phone: Joi.string(),
+        department: Joi.string().required()
     };
     return Joi.validate(user, schema);
 }
@@ -63,6 +65,7 @@ function validateUserPostByAdmin(user) {
         password: Joi.string().min(6).max(20).required(),
         email: Joi.string().email().required(),
         phone: Joi.string()
+        // department: Joi.string().required()
     };
     return Joi.validate(user, schema);
 }
@@ -102,12 +105,12 @@ function validateUserListGet(user) {
     return Joi.validate(user, schema);
 }
 
-function validateUserLogin(rso) {
+function validateUserLogin(user) {
     const schema = {
         email: Joi.string().min(6).max(200).required(),
         password: Joi.string().min(6).max(200).required(),
     };
-    return Joi.validate(rso, schema);
+    return Joi.validate(user, schema);
 }
 
 function validateChangePassword(user) {
