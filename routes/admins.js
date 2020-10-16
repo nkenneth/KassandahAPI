@@ -112,6 +112,29 @@ router.post("/password/change", adminAuth, async (req, res) => {
     return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS); 
   });
 
+// attach role to a user
+router.post("/user/role/attach", adminAuth, async (req, res) => {
+
+  const { roleId, userId } = req.body;
+
+  const role = await Role.findById(roleId);
+  if(!role) return response.error(res, ROLE_CONSTANTS.NOT_FOUND);
+  console.log(role);
+
+
+  const user = await User.findById(userId);
+  if(!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+  console.log(user);
+
+  user.roles.push(role._id);
+
+  await user.save();
+
+  return response.success(res); 
+
+});
+
+// apilogs
 router.get("/apiLogs", test("taaaa"), async (req, res) => {
 
     let criteria = {}
