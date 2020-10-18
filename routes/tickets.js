@@ -1,7 +1,9 @@
 const { TICKET_CONSTANTS, USER_CONSTANTS }  = require("../config/constant.js");
+const config = require("config");
 const { userAuth, adminAuth } = require("../middleware/auth");
 const mongoose = require("mongoose");
 const response = require("../services/response");
+const commonFunctions = require("../services/commonFunctions");
 const _ = require("lodash");
 const express = require("express");
 const multer = require("multer");
@@ -17,6 +19,8 @@ const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
+const { Document } = require("../models/document");
+const { Comment } = require("../models/comment");
 const { sendPhaseApprovalMail } = require("../services/amazonSes");
 const { Z_NEED_DICT } = require("zlib");
 const { WorkMailMessageFlow } = require("aws-sdk");
@@ -140,15 +144,11 @@ router.post("/", userAuth, upload, async (req, res) => {
   const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
-  if(req.fileValidationError) {
+  if (req.fileValidationError) {
     req.files.forEach( (file) => { fs.unlinkSync(file.path) })
     return response.error(res, req.fileValidationError);
   }
-
-  if (!req.files) {
-    return response.error(res, 'Please select a document to upload');
-  }
-
+  
 
   // collect reference from invoice and make lowercase
   const ref = req.body.ref;
@@ -160,7 +160,7 @@ router.post("/", userAuth, upload, async (req, res) => {
   
   let isPossibleDuplicate = false;
 
-  const { category, department, vendor, numberOfItems, items, description, dueDate, amount } = req.body;
+  const { category, department, vendor, numberOfItems, items, description, dueDate, amount, comment } = req.body;
 
   // mitigate duplicate ticket issuing
   payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
@@ -194,6 +194,28 @@ router.post("/", userAuth, upload, async (req, res) => {
     // Persit ticket
     await ticket.save();
 
+    // Store document paths
+    console.log(req.files)
+    if (!commonFunctions.isEmpty(req.files)) {
+      
+      for(const document of req.files) {
+        documentPath = document.path.replace(/storage/, `${config.get('APP_URL')}`);
+
+        let documentModel = await Document.create({ ticket: ticket._id, document: documentPath });
+        console.log(`Document path stored: ${documentPath}`);
+      }
+
+    }
+
+    // Store comment
+    console.log(req.body.comment);
+    if (comment != "" || comment != null) {
+      
+        let commentModel = await Comment.create({ ticket: ticket._id, user: user._id, comment: comment });
+        console.log(`Comment stored: ${comment}`);
+
+    }
+
     // Fetch phase model and email approver
     const phaseModel = await Phase.findById(phase);
     const approverEmail = await User.findById(phaseModel.approver).email;
@@ -202,10 +224,12 @@ router.post("/", userAuth, upload, async (req, res) => {
     // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
 
     // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
-    let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
+    let ticketDetails = await ticket.populate('user category department vendor workflow phase document').execPopulate();
+    let ticketDocuments = await Document.find({ticket: ticket._id});
+    let comments = await Comment.find({ticket: ticket._id});
 
     // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
-    return response.withData(res, result);
+    return response.withData(res, { ticketDetails, ticketDocuments, comments });
 
   } catch (error) {
     console.error(error.message);

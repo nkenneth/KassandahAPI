@@ -10,7 +10,7 @@
   "engines": {
     "node": "10.13.0"
   },
-  "author": "Jagdeep",
+  "author": "Anselm",
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^6.3.1",

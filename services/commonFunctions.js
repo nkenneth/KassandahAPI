@@ -75,12 +75,17 @@ function getDateFromEpoch(startTime) {
 
     return currentDate
 }
-// console.log(transformMobile("09876543210"));
-// console.log(transformMobile("9876543210"));
-// console.log(transformMobile("2349876543210"));
-// console.log(transformMobile("+2349876543210"));
 
-module.exports.formatter = formatter
-module.exports.transformMobile = transformMobile
-module.exports.getStartOfDay = getStartOfDay
-module.exports.getDateFromEpoch = getDateFromEpoch
+function isEmpty(obj) {
+    for(var key in obj) {
+        if(obj.hasOwnProperty(key))
+            return false;
+    }
+    return true;
+}
+
+module.exports.formatter = formatter;
+module.exports.transformMobile = transformMobile;
+module.exports.getStartOfDay = getStartOfDay;
+module.exports.getDateFromEpoch = getDateFromEpoch;
+module.exports.isEmpty = isEmpty;
