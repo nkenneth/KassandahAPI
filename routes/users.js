@@ -22,12 +22,10 @@ const {
 } = require("../models/user");
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
-// const { sendUserRegisterMail } = require("../services/amazonSes");
 const { sendUserVerificationMail, sendResetPasswordMail } = require("../services/amazonSes");
-//const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
-// const { publishToQueue } = require("../services/MQService");
+const { publishToQueue } = require("../services/MQService");
 
 mongoose.set("debug", true);
 
@@ -190,14 +188,16 @@ router.post("/", async (req, res) => {
         if (err) return response.error(res, err.message, 500); 
     });
 
-    const queueName = "email-verification"
-    const payload = "Welcome to GIG PAYFLOW now KASSANDAH"
-    var host = config.get("app_domain");
-    console.log(`host url is: ${host}`);
-    callback_url = `${host}api/user/verify/${token.token}`;
 
-    // await publishToQueue(queueName, payload);
-    sendUserVerificationMail(user.email, user.firstName, callback_url);
+    let baseurl = config.get("app_domain");
+    console.log(`host url is: ${baseurl}`);
+    callback_url = `${baseurl}api/user/verify/${token.token}`;
+
+    // sendUserVerificationMail(user.email, user.firstName, callback_url);
+
+    const payload = { email: user.email, firstName: user.firstName, callback_url }
+
+    await publishToQueue(payload);
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     
