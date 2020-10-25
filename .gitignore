@@ -63,6 +63,7 @@ typings/
 
 .idea
 uploads/
+storage/
 
 #mybackups
 .backupDefault.json
