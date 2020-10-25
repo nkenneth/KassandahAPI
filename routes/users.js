@@ -194,10 +194,14 @@ router.post("/", async (req, res) => {
     callback_url = `${baseurl}api/user/verify/${token.token}`;
 
     // sendUserVerificationMail(user.email, user.firstName, callback_url);
-
-    const payload = { email: user.email, firstName: user.firstName, callback_url }
-
+    const payload = {
+      email: approver.email,
+      firstName: approver.firstName,
+      mailOptions: { mailType: "sendUserVerificationMail", callback_url }
+    }
     await publishToQueue(payload);
+
+    
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     

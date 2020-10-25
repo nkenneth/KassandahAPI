@@ -21,6 +21,7 @@ const { Phase } = require("../models/phase");
 const { Category } = require("../models/category");
 const { Document } = require("../models/document");
 const { Comment } = require("../models/comment");
+const { publishToQueue } = require("../services/MQService");
 const { sendPhaseApprovalMail } = require("../services/amazonSes");
 const { Z_NEED_DICT } = require("zlib");
 const { WorkMailMessageFlow } = require("aws-sdk");
@@ -49,15 +50,10 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
   const { error } = validateTicketPatch(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
-  console.log('IGGGOOOOTTTHHHEEERRREE')
 
   if (req.fileValidationError) {
     req.files.forEach( (file) => { fs.unlinkSync(file.path) })
     return response.error(res, req.fileValidationError);
-  }
-
-  if (!req.files) {
-    return response.error(res, 'Please select a document to upload');
   }
 
   const { id } = req.params;
@@ -95,7 +91,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
       });
 
       const phaseModel = await Phase.findById(ticket.phase);
-      const approverEmail = await User.findById(phaseModel.approver).email;
+      const approver = await User.findById(phaseModel.approver);
     } else {
        // Fetch ticket category
       const categoryModel = await Category.findById(category);
@@ -118,14 +114,18 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
 
       // Fetch phase model and email approver
       const phaseModel = await Phase.findById(phase);
-      const approverEmail = await User.findById(phaseModel.approver).email;
+      const approver = await User.findById(phaseModel.approver);
     }
 
-   
+    const payload = {
+      email: approver.email,
+      firstName: approver.firstName,
+      mailOptions: { mailType: "sendApprovalMail" }
+    }
+    await publishToQueue(payload);
 
-    //  TODO: sendTicketApprovalEmail()
-    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
 
+  
     // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
     let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
 
@@ -218,10 +218,15 @@ router.post("/", userAuth, upload, async (req, res) => {
 
     // Fetch phase model and email approver
     const phaseModel = await Phase.findById(phase);
-    const approverEmail = await User.findById(phaseModel.approver).email;
+    const approver = await User.findById(phaseModel.approver);
 
-    //  TODO: sendTicketApprovalEmail()
-    // sendPhaseApprovalMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+    const payload = {
+      email: approver.email,
+      firstName: approver.firstName,
+      mailOptions: { mailType: "sendApprovalMail" }
+    }
+    await publishToQueue(payload);
+
 
     // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
     let ticketDetails = await ticket.populate('user category department vendor workflow phase document').execPopulate();
@@ -320,9 +325,18 @@ router.patch("/approve/:id", async (req, res) => {
     if(currentPhase == phaseCount) {
       ticket.phaseStatus = "approved";
       ticket.status = "approved";
-      ticket.save();
+      await ticket.save();
 
-      // TODO: send approve mail to requester
+      user = await User.findById(ticket.user);
+      if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+      // send approved mail to requester
+      const payload = {
+      email: approver.email,
+      firstName: approver.firstName,
+      mailOptions: { mailType: "sendApprovalMail" }
+      }
+      await publishToQueue(payload);
 
       return response.withData(res, ticket);
     }
@@ -331,9 +345,17 @@ router.patch("/approve/:id", async (req, res) => {
     if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
 
     ticket.phase = workflow.phases[currentPhase];
-    ticket.save();
+    await ticket.save();
 
-    // TODO: send mail to next p hase approver
+    // send mail to next phase approver
+    nextPhase = await Phase.findById(ticket.phase);
+
+    const payload = {
+      email: user.email,
+      firstName: user.firstName,
+      mailOptions: { mailType: "sendApprovalMail" }
+    }
+    await publishToQueue(payload);
 
     return response.success(res);
 
@@ -372,17 +394,36 @@ router.patch("/reject/:id", async (req, res) => {
     if(currentPhase == phaseCount) {
       ticket.phaseStatus = "rejected";
       ticket.status = "rejected";
-      ticket.save();
+      await ticket.save();
 
-      // TODO: send reject mail to requester
+      // send reject mail to requester
+      user = User.findById(ticket.user);
+      if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+      const payload = {
+      email: user.email,
+      firstName: user.firstName,
+      mailOptions: { mailType: "sendRejectMail" }
+      }
+      await publishToQueue(payload);
 
       return response.withData(res, ticket);
     }
 
     ticket.phaseStatus = "rejected";
-    ticket.save();
+    await ticket.save();
 
-    // TODO: send rejected mail to requester
+    // send rejected mail to requester
+
+    user = User.findById(ticket.user);
+    if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+    const payload = {
+      email: user.email,
+      firstName: user.firstName,
+      mailOptions: { mailType: "sendRejectMail" }
+    }
+    await publishToQueue(payload);
 
     return response.success(res);
 

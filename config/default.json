@@ -18,6 +18,11 @@
   "S3_BUCKET_NAME": "gigpap",
   "ses": {
     "senderId": "anselm.mba@thegiggroupng.com"
+  },
+  "email": {
+    "verifyEmailSubject": "Verify Your Email",
+    "phaseApprovalSubject": "Approve Requisition",
+    "resetPasswordSubject": "Reset Your Password"
   }
 
 }
