@@ -3,11 +3,11 @@ const config = require('config');
 const CONN_URL = config.get('MQ_CONN_URL');
 const EmailService = require('./amazonSes');
 const open = require('amqplib').connect(CONN_URL);	
-const queue = 'send-email';
+const queue = 'sendEmails';
 
 // Send Email Publisher
 const publishToQueue = payload => open.then(connection => connection.createChannel())
-  .then(channel => channel.assertQueue(queue)
+  .then(channel => channel.assertQueue(queue, { durable: true })
     .then(() => channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)))))
       .catch(error => console.warn(error));
 
@@ -19,7 +19,10 @@ const consumeFromQueue = () => {
     .then(() => { 
       console.log(' [*] Waiting for messages in %s. To exit press CTRL+C', queue);	    
       return channel.consume(queue, (msg) => {	      
+        console.log('i got to consume')
         if (msg !== null) {	        
+          console.log(JSON.parse(msg.content));
+
           const { email, firstName, mailOptions } = JSON.parse(msg.content.toString());	        
           console.log(' [x] Received %s', email);
           switch (mailOptions.mailType) {
@@ -34,11 +37,17 @@ const consumeFromQueue = () => {
               // send approval mail via aws ses	        
               EmailService.sendApprovalMail(email, firstName).then(() => {	          
                 channel.ack(msg);	        
-              });	     
+              });
+            
+            case "sendRejectMail": 
+              // send rejection mail via aws ses	        
+              EmailService.sendRejectMail(email, firstName).then(() => {	          
+                channel.ack(msg);	        
+              });	  
+
             default:
               break;
           }
-           
         }	    
       });	  
     }))

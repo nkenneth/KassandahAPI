@@ -1,4 +1,4 @@
-const { TICKET_CONSTANTS, USER_CONSTANTS }  = require("../config/constant.js");
+const { TICKET_CONSTANTS, USER_CONSTANTS, PHASE_CONSTANTS }  = require("../config/constant.js");
 const config = require("config");
 const { userAuth, adminAuth } = require("../middleware/auth");
 const mongoose = require("mongoose");
@@ -114,7 +114,12 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
 
       // Fetch phase model and email approver
       const phaseModel = await Phase.findById(phase);
+      if (!phaseModel) return response.error(PHASE_CONSTANTS.PHASE_NOT_FOUND);
+
+
       const approver = await User.findById(phaseModel.approver);
+      if (!approver) return response.error(USER_CONSTANTS.INVALID_USER);
+
     }
 
     const payload = {
@@ -218,7 +223,10 @@ router.post("/", userAuth, upload, async (req, res) => {
 
     // Fetch phase model and email approver
     const phaseModel = await Phase.findById(phase);
+    if (!phaseModel) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
+
     const approver = await User.findById(phaseModel.approver);
+    if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
     const payload = {
       email: approver.email,
@@ -285,12 +293,12 @@ router.get("/", userAuth, async (req, res)=> {
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   try {
-      ticket = await Ticket.findById(id);
-      if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
-      console.log(ticket);
-      return response.withData(res, ticket);
+    ticket = await Ticket.findById(id);
+    if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+    console.log(ticket);
+    return response.withData(res, ticket);
   } catch (error) {
-      return response.error(res, error.message);
+    return response.error(res, error.message);
   }
   
 });
@@ -327,7 +335,7 @@ router.patch("/approve/:id", async (req, res) => {
       ticket.status = "approved";
       await ticket.save();
 
-      user = await User.findById(ticket.user);
+      const user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
       // send approved mail to requester
@@ -341,14 +349,18 @@ router.patch("/approve/:id", async (req, res) => {
       return response.withData(res, ticket);
     }
 
-    phase = await Phase.findById(workflow.phases[currentPhase]);
+    const phase = await Phase.findById(workflow.phases[currentPhase]);
     if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
 
     ticket.phase = workflow.phases[currentPhase];
     await ticket.save();
 
     // send mail to next phase approver
-    nextPhase = await Phase.findById(ticket.phase);
+    const nextPhase = await Phase.findById(ticket.phase);
+    if (!nextPhase) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
+
+    const user = await User.findById(nextPhase.approver);
+    if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
     const payload = {
       email: user.email,
@@ -397,7 +409,7 @@ router.patch("/reject/:id", async (req, res) => {
       await ticket.save();
 
       // send reject mail to requester
-      user = User.findById(ticket.user);
+      user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
       const payload = {
@@ -415,7 +427,7 @@ router.patch("/reject/:id", async (req, res) => {
 
     // send rejected mail to requester
 
-    user = User.findById(ticket.user);
+    user = await User.findById(ticket.user);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
     const payload = {
