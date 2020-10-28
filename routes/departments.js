@@ -22,8 +22,6 @@ router.get("/:id", async (req, res) => {
     
 });
 
-
-
 // Get Department List
 router.get("/", async (req, res) => {
 
@@ -69,13 +67,13 @@ router.patch("/:id", adminAuth, async (req, res) => {
     if (error) return response.error(res, error.details[0].message); 
 
     const { id } = req.params;
-    const { name, hod } = req.body;
+    const { name, description, hod, deputyhod } = req.body;
 
     try {
         let departmentExists = await Department.findById(id);
-        if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_EXISTS);
+        if (!departmentExists) return response.error(res, DEPARTMENT_CONSTANTS.DEPARTMENT_NOT_FOUND);
 
-        department = await departmentExists.updateOne({ name, hod });
+        department = await departmentExists.updateOne({ name, description, hod, deputyhod });
         return response.success(res, DEPARTMENT_CONSTANTS.DEPARTMENT_UPDATED);
 
     } catch (error) {
