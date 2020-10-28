@@ -127,8 +127,10 @@ router.post("/user/role/attach", adminAuth, async (req, res) => {
   if(!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
   console.log(user);
 
-  user.roles.push(role._id);
+  const roleIndex = user.roles.indexOf(roleId);
+  if (roleIndex > -1) return response.error(res, "User already has role");
 
+  user.roles.push(role._id);
   await user.save();
 
   return response.success(res); 
@@ -152,7 +154,6 @@ router.post("/user/role/detach", adminAuth, async (req, res) => {
   console.log(user.roles);
 
   const roleIndex = user.roles.indexOf(roleId);
-
   if (roleIndex <= -1) return response.error(res, "User does not have role");
 
   user.roles.splice(roleIndex);
