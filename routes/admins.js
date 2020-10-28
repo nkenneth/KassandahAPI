@@ -14,6 +14,7 @@ const { User, validateUserPostByAdmin, validateChangePassword } = require("../mo
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
 const { sendUserVerificationMail, sendResetPasswordMail } = require("../services/amazonSes");
+const { isEmpty } = require("lodash");
 
 
 
@@ -133,6 +134,38 @@ router.post("/user/role/attach", adminAuth, async (req, res) => {
   return response.success(res); 
 
 });
+
+// detach role from user
+router.post("/user/role/detach", adminAuth, async (req, res) => {
+
+  const { roleId, userId } = req.body;
+
+  const roleModel = await Role.findById(roleId);
+  if(!roleModel) return response.error(res, ROLE_CONSTANTS.NOT_FOUND);
+  console.log(roleModel);
+
+
+  const user = await User.findById(userId);
+  if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+  
+  console.log(user);
+  console.log(user.roles);
+
+  const roleIndex = user.roles.indexOf(roleId);
+
+  if (roleIndex <= -1) return response.error(res, "User does not have role");
+
+  user.roles.splice(roleIndex);
+  console.log(user.roles);
+
+  await user.save();
+
+  // return response.success(res); 
+  return response.withData(res, user.roles); 
+
+});
+
+
 
 // apilogs
 router.get("/apiLogs", test("taaaa"), async (req, res) => {

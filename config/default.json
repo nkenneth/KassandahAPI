@@ -2,7 +2,7 @@
   "environment": "dev",
   "app_name": "Kassandah",
   "dbMlab": "mongodb://localhost:27017/papdb",
-  "port": "8000",
+  "port": "9700",
   "jwtPrivateKey": "isiLRTBlmSt0Y9qjtU6NTuHIP7xU2XoivazUXrfePFGwbhb7mtrNkqLBS3YRrWam",
   "jwtRefreshTokenPrivateKey": "RIaPfryYBa6tNU9rzEFoxgipFZaJOfCkgdD8elUTu5SsQKDb0HapSIzabQNm8axa",
   "requiresAuth": true,
