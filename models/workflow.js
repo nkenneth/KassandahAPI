@@ -19,5 +19,16 @@ function validateWorkflowPost(phase) {
     return Joi.validate(phase, schema);
 }
 
+function validateWorkflowPatch(phase) {
+    const schema = {
+        name: Joi.string().required(),
+        description: Joi.string(),
+        phases: Joi.array().items(Joi.string().required())
+
+    };
+    return Joi.validate(phase, schema);
+}
+
 module.exports.Workflow = Workflow;
 module.exports.validateWorkflowPost = validateWorkflowPost;
+module.exports.validateWorkflowPatch = validateWorkflowPatch;

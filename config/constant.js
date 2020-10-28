@@ -40,6 +40,7 @@ const ROLE_CONSTANTS = {
   SUBMIT_SUCCESS: "Role added successfully",
   UPDATE_SUCCESS: "Role updated successfully",
   DELETE_SUCCESS: "Role deleted successfully",
+  NOT_FOUND: "Role not found"
 };
 
 const USER_CONSTANTS = {
@@ -68,8 +69,12 @@ const TICKET_CONSTANTS = {
   TICKET_CREATED: "Ticket created succesfully",
   TICKET_DELETED: "Ticket deleted successfully",
   TICKET_UPDATED: "Ticket updated successfully",
+  TICKET_WRONG_OWNER: "Not permited to update this ticket",
   TICKET_EXPIRED: "Ticket expired",
-  TICKET_NOT_FOUND: "Ticket NOT found"
+  TICKET_NOT_FOUND: "Ticket NOT found",
+  TICKET_TREATED: "Ticket ALREADY treated",
+  TICKET_WORKFLOW_ERROR: "Error occured while processing ticket workflow",
+  TICKET_PHASE_ERROR: "Error occured while processing ticket phase"
 };
 
 const CATEGORY_CONSTANTS = {

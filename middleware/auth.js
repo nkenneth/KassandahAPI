@@ -39,10 +39,12 @@ adminAuth = async function (req, res, next) {
 
     
     let admin = await User.findOne({ _id: mongoose.Types.ObjectId(decoded.userId) });
-    // if (!admin || (user && user.accessToken !== token))
-
-    if (!admin)
+    if (!admin || (admin && admin.accessToken !== token))
       return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
+
+
+    // if (!admin)
+    //   return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.ACCESS_DENIED, 401);
 
     reqUserId = decoded.userId;
 

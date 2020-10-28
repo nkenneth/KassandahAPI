@@ -22,17 +22,15 @@ const {
 } = require("../models/user");
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
-// const { sendUserRegisterMail } = require("../services/amazonSes");
 const { sendUserVerificationMail, sendResetPasswordMail } = require("../services/amazonSes");
-//const { sendActivationMail } = require("../services/sendMail");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
-// const { publishToQueue } = require("../services/MQService");
+const { publishToQueue } = require("../services/MQService");
 
 mongoose.set("debug", true);
 
 // Get user list
-router.get("/", userAuth, async (req, res) => {
+router.get("/", adminAuth, async (req, res) => {
   let criteria = {};
   var skipVal, limitVal;
   if (isNaN(parseInt(req.query.offset))) skipVal = 0;
@@ -41,9 +39,13 @@ router.get("/", userAuth, async (req, res) => {
   if (isNaN(parseInt(req.query.limit))) limitVal = 500;
   else limitVal = parseInt(req.query.limit);
 
-  if (req.query.fullName) {
-    var regexName = new RegExp(req.query.fullName, "i");
-    criteria.fullName = regexName;
+  if (req.query.firstName) {
+    var regexName = new RegExp(req.query.firstName, "i");
+    criteria.firstName = regexName;
+  }
+  if (req.query.lastName) {
+    var regexName = new RegExp(req.query.lastName, "i");
+    criteria.lastName = regexName;
   }
   if (req.query.email) criteria.email = req.query.email;
   if (req.query.phone) criteria.phone = req.query.phone;
@@ -72,21 +74,19 @@ router.get("/", userAuth, async (req, res) => {
     { $sort: { insertDate: -1 } },
     { $skip: skipVal },
     { $limit: limitVal },
-    { $lookup: { from: "states", localField: "stateId", foreignField: "stateId", as: "stateData" } },
     {
       $project: {
         _id: 0,
         userId: "$_id",
-        role: 1,
-        fullName: 1,
+        roles: 1,
+        firstName: 1,
+        lastName: 1,
         email: 1,
         phone: 1,
-        address: 1,
+        department: 1,
+        isVerified: 1,
         status: 1,
-        stateName: { $arrayElemAt: ["$stateData.name", 0] },
-        stateCode: { $arrayElemAt: ["$stateData.code", 0] },
-        stateId: 1,
-        address: 1,
+        profilePic: 1,
         createdBy: 1,
         modifiedBy: 1,
         lastLogin: 1,
@@ -159,9 +159,9 @@ router.post("/", async (req, res) => {
   }
 
   const email = req.body.email.toLowerCase();
-  const { firstName, lastName, phone, password } = req.body;
+  const { firstName, lastName, phone, password, department } = req.body;
 
-  console.log( { firstName, lastName, phone, password, email } );
+  console.log( { firstName, lastName, phone, password, email, department } );
 
   try {
 
@@ -169,7 +169,7 @@ router.post("/", async (req, res) => {
     role = await Role.findOne({ role: "user" });
 
     //instantiate User model
-    user = new User({ firstName, lastName, email, phone, password, roles: role._id, status:"inactive" });
+    user = new User({ firstName, lastName, email, phone, password, department, roles: role._id, status:"inactive" });
 
     //create salt for user password hash
     const salt = await bcrypt.genSalt(10);
@@ -187,10 +187,21 @@ router.post("/", async (req, res) => {
     token.save(function (err) {
         if (err) return response.error(res, err.message, 500); 
     });
-    const queueName = "email-verification"
-    const payload = "Welcome to GIG PAYFLOW now KASSANDAH"
-    // await publishToQueue(queueName, payload);
-    sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+
+
+    let baseurl = config.get("app_domain");
+    console.log(`host url is: ${baseurl}`);
+    callback_url = `${baseurl}api/user/verify/${token.token}`;
+
+    // sendUserVerificationMail(user.email, user.firstName, callback_url);
+    const payload = {
+      email: user.email,
+      firstName: user.firstName,
+      mailOptions: { mailType: "sendUserVerificationMail", callback_url }
+    }
+    await publishToQueue(payload);
+
+    
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
     
@@ -198,7 +209,6 @@ router.post("/", async (req, res) => {
     console.error(err.message);
     return response.error(res, err.message, 500);
   }
-
 });
 
 // Update existing user
@@ -243,41 +253,43 @@ router.put("/", userAuth, async (req, res) => {
   await user.save();
   user.userId = user._id;
 
-  let response = _.pick(user, ["userId", "fullName", "phone", "email", "address", "status"]);
+  let response = _.pick(user, ["userId", "firstName", "lastName", "phone", "email", "address", "status"]);
 
   res.send({ statusCode: 200, message: "Success", data: response });
 });
 
-//verify email
+// verify email
 router.get("/verify/:token", async (req, res) => {
   
   const { token } = req.params; 
-  if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  if(!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   console.log("token isssss:::::" + token);
 
   // Find a matching token
   Token.findOne({ token }, function (err, token) {
-    if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+    if (!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+    // if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
     
     // If we found a token, find a matching user
     User.findOne({ _id: token._userId }, function (err, user) {
-        if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
-        if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+        if (!user) return response.redirect(res, USER_CONSTANTS.INVALID_USER); 
+        // if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
+        if (user.isVerified) return response.redirect(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+        // if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
 
         // Verify and save the user
         user.isVerified = true;
         user.status = "active";
         user.save(function (err) {
-            if (err) { return response.error(res, err.message); }
-            return response.success(res, USER_CONSTANTS.VERIFICATION_SUCCESS);
+            if (err) return response.error(res, err.message); 
+            return response.redirect(res);
         });
     });
   });
 });
 
-
-
-//resend verify email
+// resend verify email
 router.post("/resend", async (req, res) => {
  
   // Check for validation errors    
@@ -298,15 +310,14 @@ router.post("/resend", async (req, res) => {
   token.save(function (err) {
       if (err) return response.error(res, err.message, 500); 
   });
-
-  await sendUserVerificationMail(user.email, user.firstName, `http://localhost:9700/api/user/verify/${token.token}`);
+  var host = config.get("app_domain");
+  console.log(`host url is: ${host}`);
+  callback_url = `${host}api/user/verify/${token.token}`;
+  await sendUserVerificationMail(user.email, user.firstName, callback_url);
 
   return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
 
 });
-
-
-
 
 // User login api
 router.post("/login", async (req, res) => {
@@ -376,8 +387,7 @@ router.post("/password/change", userAuth, async (req, res) => {
   const { oldPassword, newPassword } = req.body;
 
   const validPassword = await bcrypt.compare(oldPassword, user.password);
-  if (!validPassword)
-    return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
+  if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_PASSWORD);
 
   //create salt for user password hash
   const salt = await bcrypt.genSalt(10);

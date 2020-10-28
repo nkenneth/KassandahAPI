@@ -1,4 +1,6 @@
 
+const config = require("config");
+
 
 function validationErrors(res, payload = {}) {
     return res.status(422).json({
@@ -32,7 +34,13 @@ function error(res, msg = 'Error Occured', code = 400) {
 }
 
 
+function redirect(res, url = config.get("app_domain"), msg = "") {
+    return res.redirect(301, `${url}${msg}`);
+}
+
+
 module.exports.success = success
 module.exports.withData = withData
 module.exports.error = error
+module.exports.redirect = redirect
 module.exports.validationErrors = validationErrors

@@ -6,6 +6,7 @@ const response = require("../services/response");
 const router = express.Router();
 const { Workflow, validateWorkflowPost, validateWorkflowPatch } = require("../models/workflow");
 const { adminAuth } = require("../middleware/auth");
+const { WorkMailMessageFlow } = require("aws-sdk");
 
 
 // Get  Single Workflow
@@ -68,14 +69,15 @@ router.patch("/:id", adminAuth, async (req, res) => {
     
     const { id } = req.params;
     
-    const { name, user, sla, isDynamic } = req.body;
+    const { name, description, phases } = req.body;
     
     try {
         let workflowExists = await Workflow.findById(id);
         if (!workflowExists) return response.error(res, WORKFLOW_CONSTANTS.WORKFLOW_NOT_FOUND);
 
-        workflow = await workflowExists.updateOne({ name, user, sla, isDynamic });
-        return response.success(res, WORKFLOW_CONSTANTS.WORKFLOW_UPDATED);
+        workflow = await workflowExists.updateOne({ name, description, phases });
+        if (!workflow.nModified >= 1) return response.error(res, "Error updating workflow");
+        return response.withData(res, WORKFLOW_CONSTANTS.WORKFLOW_UPDATED);
 
     } catch (error) {
         return response.error(res, error.message);

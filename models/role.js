@@ -8,7 +8,6 @@ const roleSchema = new mongoose.Schema({
 
 const Role = mongoose.model("role", roleSchema);
 
-
 function validateRolePost(role) {
     const schema = {
         role: Joi.string().required(),
