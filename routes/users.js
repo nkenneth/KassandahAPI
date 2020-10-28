@@ -195,8 +195,8 @@ router.post("/", async (req, res) => {
 
     // sendUserVerificationMail(user.email, user.firstName, callback_url);
     const payload = {
-      email: approver.email,
-      firstName: approver.firstName,
+      email: user.email,
+      firstName: user.firstName,
       mailOptions: { mailType: "sendUserVerificationMail", callback_url }
     }
     await publishToQueue(payload);
