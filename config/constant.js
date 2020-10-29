@@ -119,6 +119,10 @@ const VENDOR_CONSTANTS = {
   VENDOR_NOT_FOUND: "Vendor NOT found"
 };
 
+const DASHBOARD_CONSTANTS = {
+  
+}
+
 
 const UPLOAD_CONSTANTS = {
   VALIDATION_ERROR: "Only images, pdf and word documents are allowed!"
