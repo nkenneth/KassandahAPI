@@ -161,11 +161,51 @@ router.post("/user/role/detach", adminAuth, async (req, res) => {
 
   await user.save();
 
-  // return response.success(res); 
-  return response.withData(res, user.roles); 
+  return response.success(res); 
+  // return response.withData(res, user.roles); 
 
 });
 
+// deactivate user
+router.patch("/user/deactivate/:id", adminAuth, async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+    user = await User.findById(id);
+    if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+    if (user.status == "inactive") return response.error(res, "User already in-active");
+
+    user.status = "inactive";
+    await user.save();
+    return response.success(res);
+
+  } catch (error) {
+    console.log(error.message);
+    return response.error(res, error.message);
+  }
+
+});
+
+// activate user
+router.patch("/user/activate/:id", adminAuth, async (req, res) => {
+
+  const { id } = req.params;
+
+  try {
+    user = await User.findById(id);
+    if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+    if (user.status == "active") return response.error(res, "User already active");
+    
+    user.status = "active";
+    await user.save();
+    return response.success(res);
+
+  } catch (error) {
+    console.error(error.message);
+    return response.error(res, error.message);
+  }
+});
 
 
 // apilogs
