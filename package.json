@@ -4,10 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start-dev": "NODE_ENV=dev node index.js",
-    "start-staging": "NODE_ENV=staging node index.js",
-    "start-mqstaging": "NODE_ENV=staging node services/MQService.js consumeFromQueue",
-    "start-prod": "NODE_ENV=production node index.js",
+    "start-dev-app": "NODE_ENV=dev node index.js",
+    "start-staging-app": "NODE_ENV=staging node index.js",
+    "start-staging-mq": "NODE_ENV=staging node services/MQService.js consumeFromQueue",
+    "start-prod-app": "NODE_ENV=production node index.js",
     "test": "jest --watchAll --verbose"
   },
   "engines": {
