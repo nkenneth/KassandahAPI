@@ -8,7 +8,7 @@ const response = require("../services/response");
 const router = express.Router();
 
 
-router.get("totalActiveUsers",adminAuth, async, (req, res) => {
+router.get("/totalActiveUsers",adminAuth, async, (req, res) => {
     try {
         totalUser = await User.find({ isVerified : true, status: "active"});
         var total_active_users = totalUser.count()
@@ -18,7 +18,7 @@ router.get("totalActiveUsers",adminAuth, async, (req, res) => {
     }
 });
 
-router.get("totalPendingRequests", adminAuth, async (req, res) => {
+router.get("/totalPendingRequests", adminAuth, async (req, res) => {
 try{
     totalPendingRequest = await Ticket.find({ status: "pending"});
     var total_pending_requests =  totalPendingRequest.count();
@@ -28,7 +28,7 @@ try{
 }
 });
 
-router.get("totalUsers", adminAuth, async (req, res) =>{
+router.get("/totalUsers", adminAuth, async (req, res) =>{
 try {
     totalUser = await User.find();
     var total_users = totalUsers.count();
@@ -38,7 +38,7 @@ try {
 }
 });
 
-router.get("totalDeclinedRequest", adminAuth, async (req, res) => {
+router.get("/totalDeclinedRequest", adminAuth, async (req, res) => {
     try{
         totalDeclinedRequest = await Ticket.find({ status: "rejected"});
         var total_declined_requests =  totalDeclinedRequest.count();
