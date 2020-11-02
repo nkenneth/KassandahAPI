@@ -29,7 +29,7 @@ router.get("/ticket-pending", userAuth, async (req, res) => {
     try {
         tickets = await Ticket.find({ user: req.jwtData.userId, status: "pending" });
         console.log(tickets.length);
-        return response.withData(res, tickets.length);
+        return response.withData(res, { totalNumberOfPendingTickets: tickets.length });
     } catch (error) {
         return response.error(res, error.message);
     }
@@ -38,12 +38,12 @@ router.get("/ticket-pending", userAuth, async (req, res) => {
 
 
 // Get  all approved user tickets count
-router.get("/ticket-pending", userAuth, async (req, res) => {
+router.get("/ticket-approved", userAuth, async (req, res) => {
     
     try {
         tickets = await Ticket.find({ user: req.jwtData.userId, status: "approved" });
         console.log(tickets.length);
-        return response.withData(res, tickets.length);
+        return response.withData(res, { totalNumberOfApprovedTickets: tickets.length });
     } catch (error) {
         return response.error(res, error.message);
     }
@@ -52,12 +52,12 @@ router.get("/ticket-pending", userAuth, async (req, res) => {
 
 
 // Get  all rejected user tickets count
-router.get("/ticket-pending", userAuth, async (req, res) => {
+router.get("/ticket-rejected", userAuth, async (req, res) => {
     
     try {
         tickets = await Ticket.find({ user: req.jwtData.userId, status: "rejected" });
         console.log(tickets.length);
-        return response.withData(res, tickets.length);
+        return response.withData(res, { totalNumberOfRejectedTickets: tickets.length });
     } catch (error) {
         return response.error(res, error.message);
     }
