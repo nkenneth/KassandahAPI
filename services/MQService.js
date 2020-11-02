@@ -7,7 +7,7 @@ const queue = 'sendEmails';
 
 // Send Email Publisher
 const publishToQueue = payload => open.then(connection => connection.createChannel())
-  .then(channel => channel.assertQueue(queue, { durable: true })
+  .then(channel => channel.assertQueue(queue)
     .then(() => channel.sendToQueue(queue, Buffer.from(JSON.stringify(payload)))))
       .catch(error => console.warn(error));
 

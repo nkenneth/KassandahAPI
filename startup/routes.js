@@ -10,6 +10,7 @@ const phases = require("../routes/phases");
 const workflows = require("../routes/workflows");
 const departments = require("../routes/departments");
 const vendors = require("../routes/vendors");
+const dashboards = require("../routes/dashboards");
 const roles = require("../routes/roles");
 const s3upload = require("../routes/s3upload");
 const reqLogger = require("../startup/logger");
@@ -28,6 +29,7 @@ module.exports = function (app) {
   app.use("/api/workflow", workflows);
   app.use("/api/department", departments);
   app.use("/api/vendor", vendors);
+  app.use("/api/dashboard", dashboards);
   app.use("/api/role", roles);
   app.use("/api/s3upload", s3upload);
   app.use(error);
