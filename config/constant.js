@@ -120,6 +120,11 @@ const VENDOR_CONSTANTS = {
 };
 
 
+const DASHBOARD_CONSTANTS = {
+  STAT_ERROR: "Error retrieving dashboard info"
+};
+
+
 const UPLOAD_CONSTANTS = {
   VALIDATION_ERROR: "Only images, pdf and word documents are allowed!"
 };
@@ -138,4 +143,5 @@ module.exports.PHASE_CONSTANTS = PHASE_CONSTANTS;
 module.exports.WORKFLOW_CONSTANTS = WORKFLOW_CONSTANTS;
 module.exports.DEPARTMENT_CONSTANTS = DEPARTMENT_CONSTANTS;
 module.exports.VENDOR_CONSTANTS = VENDOR_CONSTANTS;
+module.exports.DASHBOARD_CONSTANTS = DASHBOARD_CONSTANTS;
 module.exports.UPLOAD_CONSTANTS = UPLOAD_CONSTANTS;

@@ -275,18 +275,18 @@ router.get("/pending", userAuth, async (req, res) => {
 });
 
 
-// Get Ticket List
-router.get("/", userAuth, async (req, res)=> {
+// Get ticket list
+router.get("/", userAuth, async (req, res) => {
   try {
     ticketList = await Ticket.find({});
     console.log(ticketList);
     return response.withData(res, ticketList);
   } catch (error) {
-      console.log(error);
-      return response.error(res, error.message);
+    console.log(error);
+    return response.error(res, error.message);
   }
   
-})
+});
 
 
 // Get  Single Ticket
