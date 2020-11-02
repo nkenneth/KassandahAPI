@@ -242,7 +242,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     let comments = await Comment.find({ticket: ticket._id});
 
     // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
-    return response.withData(res, { ticketDetails, ticketDocuments, comments });
+    return response.withDataAndMsg(res, 'Ticket submitted successfully!', { ticketDetails, ticketDocuments, comments });
 
   } catch (error) {
     console.error(error.message);

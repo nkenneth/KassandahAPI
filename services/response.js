@@ -17,6 +17,13 @@ function success(res, msg = 'Operation successful') {
     });
 }
 
+function withDataAndMsg(res, msg = 'Operation successful', payload = {}) {
+    return res.status(200).json({
+        status: true,
+        message: msg,
+        data: payload
+    });
+}
 
 function withData(res, payload = {}) {
     return res.status(200).json({
@@ -39,8 +46,9 @@ function redirect(res, url = config.get("app_domain"), msg = "") {
 }
 
 
-module.exports.success = success
-module.exports.withData = withData
-module.exports.error = error
-module.exports.redirect = redirect
-module.exports.validationErrors = validationErrors
+module.exports.success = success;
+module.exports.withDataAndMsg = withDataAndMsg;
+module.exports.withData = withData;
+module.exports.error = error;
+module.exports.redirect = redirect;
+module.exports.validationErrors = validationErrors;
