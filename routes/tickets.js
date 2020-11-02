@@ -269,9 +269,7 @@ router.get("/pending", userAuth, async (req, res) => {
   for(const phase of phases) {
     tickets.push( await getMatchingTickets(phase._id))
   }
-  
   response.withData(res,  { phases, tickets });
-
 });
 
 
@@ -289,11 +287,40 @@ router.get("/", userAuth, async (req, res) => {
 });
 
 
+// Get user owned ticket list
+router.get("/my-tickets", userAuth, async (req, res) => {
+  try {
+    ticketList = await Ticket.find({ user: req.jwtData.userId });
+    console.log(ticketList);
+    return response.withData(res, { mytickets: ticketList });
+  } catch (error) {
+    console.log(error);
+    return response.error(res, error.message);
+  }
+  
+});
+
+
 // Get  Single Ticket
-router.get("/:id", async (req, res) => {
+router.get("/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   try {
     ticket = await Ticket.findById(id);
+    if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+    console.log(ticket);
+    return response.withData(res, ticket);
+  } catch (error) {
+    return response.error(res, error.message);
+  }
+  
+});
+
+
+// Get user owned Single Ticket
+router.get("/my-tickets/:id", userAuth, async (req, res) => {
+  const { id } = req.params;
+  try {
+    ticket = await Ticket.find({ user: req.jwtData.userId, _id: id });
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     console.log(ticket);
     return response.withData(res, ticket);
