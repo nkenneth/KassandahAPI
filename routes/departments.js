@@ -55,10 +55,8 @@ router.post("/", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
-
-
 
 
 // Update a department
