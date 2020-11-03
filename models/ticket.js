@@ -55,7 +55,7 @@ function validateTicketPost(ticket) {
         department: Joi.string().required(),
         dueDate: Joi.date().min('now').iso().required(),
         amount: Joi.number().min(0).required(),
-        comment: Joi.string()
+        comment: Joi.string().allow("")
     };
     return Joi.validate(ticket, schema);
 }
