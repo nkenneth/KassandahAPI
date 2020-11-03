@@ -149,6 +149,7 @@ router.post("/", userAuth, upload, async (req, res) => {
   const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
+  
   if (req.fileValidationError) {
     req.files.forEach( (file) => { fs.unlinkSync(file.path) })
     return response.error(res, req.fileValidationError);
