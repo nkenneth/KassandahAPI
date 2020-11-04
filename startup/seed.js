@@ -1,6 +1,6 @@
 const { User } = require("../models/user");
 const { Role } = require("../models/role");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 
 module.exports = async () => {
 

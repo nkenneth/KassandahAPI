@@ -496,7 +496,7 @@ router.patch("/reject/:id", async (req, res) => {
     return response.success(res);
 
   } catch (error) {
-      return response.error(res, error.message);
+    return response.error(res, error.message);
   }
 });
 
