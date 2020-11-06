@@ -260,8 +260,10 @@ router.get("/pending", userAuth, async (req, res) => {
     phases = await Phase.find({approver: req.jwtData.userId});
 
     async function getMatchingTickets(phaseId) {
-      const matchingTicket = await Ticket.find({phase: phaseId, phaseStatus: 'pending'})
-      console.log(matchingTicket)
+      const matchingTicket = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
+      const ticketDocuments = await Document.find({ ticket: matchingTicket._id });
+      const matchingTicketDetails = { ...matchingTicket, ...ticketDocuments };
+      console.log(matchingTicketDetails)
       return matchingTicket
     }  
 
@@ -295,7 +297,14 @@ router.get("/", userAuth, async (req, res) => {
       }
     });
     console.log(ticketList);
+
+    let ticketListDetails = [];
     
+    for (const ticket of ticketList) {
+      const ticketDocuments = await Document.find({ ticket: ticket._id });
+      const ticketDetails = { ...ticket, ...ticketDocuments };
+      ticketListDetails.push(ticketDetails);
+    }
 
     return response.withData(res, ticketList);
   } catch (error) {
