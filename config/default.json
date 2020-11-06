@@ -22,7 +22,8 @@
     "phaseApprovalSubject": "Approve Requisition",
     "resetPasswordSubject": "Reset Your Password",
     "phaseRejectionSubject": "Requisition Rejected"
-  }
+  },
+  "approver-role": "approver"
 
 }
 

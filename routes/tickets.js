@@ -1,4 +1,4 @@
-const { TICKET_CONSTANTS, USER_CONSTANTS, PHASE_CONSTANTS }  = require("../config/constant.js");
+const { TICKET_CONSTANTS, USER_CONSTANTS, PHASE_CONSTANTS, AUTH_CONSTANTS, MIDDLEWARE_AUTH_CONSTANTS }  = require("../config/constant.js");
 const config = require("config");
 const { userAuth, adminAuth } = require("../middleware/auth");
 const mongoose = require("mongoose");
@@ -256,7 +256,7 @@ router.post("/", userAuth, upload, async (req, res) => {
 router.get("/pending", userAuth, async (req, res) => {
   
   try {
-    // get phases belonging to user
+    // Get phases belonging to user
     phases = await Phase.find({approver: req.jwtData.userId});
 
     async function getMatchingTickets(phaseId) {
@@ -265,14 +265,16 @@ router.get("/pending", userAuth, async (req, res) => {
       return matchingTicket
     }  
 
-    const tickets = [];
+    let tickets = [];
 
     // get matching tickets
-    for(const phase of phases) {
-      tickets.push( await getMatchingTickets(phase._id))
+    for ( const phase of phases ) {
+      tickets.push( await getMatchingTickets( phase._id ))
     }
 
-    return response.withData(res, { phases, tickets });
+
+    return response.withData(res, { tickets });
+
   } catch (error) {
     console.log(error);
     return response.error(res, error.message);
@@ -293,6 +295,7 @@ router.get("/", userAuth, async (req, res) => {
       }
     });
     console.log(ticketList);
+    
 
     return response.withData(res, ticketList);
   } catch (error) {
@@ -326,7 +329,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
 });
 
 
-// Get  Single Ticket
+// Get single ticket
 router.get("/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   try {
@@ -343,7 +346,7 @@ router.get("/:id", userAuth, async (req, res) => {
 });
 
 
-// Get user owned Single Ticket
+// Get user owned single ticket
 router.get("/my-tickets/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   try {
@@ -360,12 +363,105 @@ router.get("/my-tickets/:id", userAuth, async (req, res) => {
 });
 
 
-// Approve ticket
-router.patch("/approve/:id", async (req, res) => {
-  const { id } = req.params;
 
+// Get ticket count pending treatment by authenticated approver
+router.get("/approver/pending", userAuth, async (req, res) => {
+
+  console.log(req.jwtData.role)
+  if (req.jwtData.role.includes(config.get("approver-role")))
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
+  
   try {
 
+    approverPhases = await Phase.find({ approver: req.jwtData.userId });
+
+    let tickets = [];
+    for (const approverPhase of approverPhases) {
+      tickets.push = await Ticket.find({
+        $or: [{ phaseStatus: "pending" }], phase: approverPhase._id
+      });
+    }
+
+    console.log(tickets.length);
+    // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
+    
+    return response.withData(res, tickets.length);
+
+  } catch (error) {
+    return response.error(res, error.message);
+  }
+  
+});
+
+// Get tickets approved count by authenticated approver
+router.get("/approver/approved", userAuth, async (req, res) => {
+
+  console.log(req.jwtData.role)
+  if (req.jwtData.role.includes(config.get("approver-role")))
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
+  
+  try {
+
+    approverPhases = await Phase.find({ approver: req.jwtData.userId });
+
+    let tickets = [];
+    for (const approverPhase of approverPhases) {
+      tickets.push = await Ticket.find({
+        $or: [{ phaseStatus: "approved" }], phase: approverPhase._id
+      });
+    }
+
+    console.log(tickets.length);
+    // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
+    
+    return response.withData(res, tickets.length);
+
+  } catch (error) {
+    return response.error(res, error.message);
+  }
+  
+});
+
+
+// Get tickets rejected count by authenticated approver
+router.get("/approver/rejected", userAuth, async (req, res) => {
+
+  console.log(req.jwtData.role)
+  if (req.jwtData.role.includes(config.get("approver-role")))
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
+  
+  try {
+
+    approverPhases = await Phase.find({ approver: req.jwtData.userId });
+
+    let tickets = [];
+    for (const approverPhase of approverPhases) {
+      tickets.push = await Ticket.find({
+        $or: [{ phaseStatus: "rejected" }], phase: approverPhase._id
+      });
+    }
+
+    console.log(tickets.length);
+    // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
+    
+    return response.withData(res, tickets.length);
+
+  } catch (error) {
+    return response.error(res, error.message);
+  }
+  
+});
+
+
+// Approve ticket
+router.patch("/approve/:id", userAuth, async (req, res) => {
+  const { id } = req.params;
+
+  console.log(req.jwtData.role)
+  if (req.jwtData.role.includes(config.get("approver-role")))
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
+  
+  try {
     // get ticket and forward or mark as approved
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
@@ -434,8 +530,12 @@ router.patch("/approve/:id", async (req, res) => {
 
 
 // Reject ticket
-router.patch("/reject/:id", async (req, res) => {
+router.patch("/reject/:id", userAuth, async (req, res) => {
   const { id } = req.params;
+
+  console.log(req.jwtData.role)
+  if (req.jwtData.role.includes(config.get("approver-role")))
+    return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
   try {
 
