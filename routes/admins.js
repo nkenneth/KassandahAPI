@@ -18,8 +18,6 @@ const { isEmpty } = require("lodash");
 
 
 
-
-
 // Create a new User
 router.post("/user", adminAuth, async (req, res) => {
     const { error } = validateUserPostByAdmin(req.body);
@@ -46,8 +44,8 @@ router.post("/user", adminAuth, async (req, res) => {
   
       // get role model
       const roleModel = await Role.findById(role);
-    console.log(roleModel);
       if(!roleModel) return response.error(res, ROLE_CONSTANTS.NOT_FOUND);
+      console.log(roleModel);
 
       //instantiate User model
       user = new User({ firstName, lastName, email, phone, password, department, roles: roleModel._id, status:"inactive" });

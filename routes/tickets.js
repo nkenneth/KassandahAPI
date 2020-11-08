@@ -33,12 +33,13 @@ const storage = multer.diskStorage({
   destination: function(req, file, cb) {
       cb(null, './storage/ticketdocs/');
   },
-
+  
   // add file extensions
   filename: function(req, file, cb) {
       let extension = path.extname(file.originalname);
       let filenameWithoutExtention = path.basename(file.originalname, extension);
-      cb(null, file.fieldname + '-' + Date.now() + '-' + filenameWithoutExtention + extension);
+      let filenameOnly = filenameWithoutExtention.split(' ').join('');
+      cb(null, file.fieldname + '-' + Date.now() + '-' + filenameOnly + extension);
   }
 });
 

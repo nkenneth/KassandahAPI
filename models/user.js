@@ -64,8 +64,8 @@ function validateUserPostByAdmin(user) {
         lastName: Joi.string().min(2).max(200).required(),
         password: Joi.string().min(6).max(20).required(),
         email: Joi.string().email().required(),
-        phone: Joi.string()
-        // department: Joi.string().required()
+        phone: Joi.string(),
+        department: Joi.string().required()
     };
     return Joi.validate(user, schema);
 }
