@@ -261,21 +261,49 @@ router.get("/pending", userAuth, async (req, res) => {
     phases = await Phase.find({approver: req.jwtData.userId});
 
     async function getMatchingTickets(phaseId) {
-      const matchingTicket = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
-      const ticketDocuments = await Document.find({ ticket: matchingTicket._id });
-      const matchingTicketDetails = { ...matchingTicket, ...ticketDocuments };
-      console.log(matchingTicketDetails)
-      return matchingTicket
+      const matchingTickets = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
+        .populate({ 
+          path: 'user category department vendor workflow phase',
+          populate: { 
+            path: 'phases',
+            populate: { path: 'approver' } 
+          }
+        });
+      // const ticketDocuments = await Document.find({ ticket: matchingTicket._id });
+      // const comments = await Comment.find({ ticket: matchingTicket._id });
+
+      // console.log("i got here.... SEE DOCUMENT HERE111111")
+      // console.log(matchingTicket)
+
+      // console.log("i got here.... SEE DOCUMENT HERE2222222")
+      // console.log(ticketDocuments)
+
+      // console.log("i got here.... SEE DOCUMENT HERE33333333")
+      // console.log(comments)
+
+      // const matchingTicketDetails = { matchingTicket, ticketDocuments, comments };
+      // console.log("i got here... SEE DOCUJENT HERE 44444")
+
+      // console.log(matchingTicketDetails)
+      return matchingTickets
     }  
 
     let tickets = [];
 
     // get matching tickets
     for ( const phase of phases ) {
-      tickets.push( await getMatchingTickets( phase._id ))
+      matchingTickets = await getMatchingTickets(phase._id);
+
+      for (const ticket of matchingTickets) {
+        ticketDocument = await Document.find({ ticket: ticket._id });
+        comments = await Comment.find({ ticket: ticket._id});
+        let ticketDetail = { ticket, ticketDocument, comments }
+        tickets.push(ticketDetail);
+
+      }
     }
 
-
+    // console.log(tickets);
     return response.withData(res, { tickets });
 
   } catch (error) {
@@ -291,7 +319,7 @@ router.get("/", userAuth, async (req, res) => {
   try {
     // ticketList = await Ticket.find({}).populate('user category department vendor workflow phase');
     let ticketList = await Ticket.find({ user: req.jwtData.userId }).populate({
-      path: 'user category department vendor workflow',
+      path: 'user category department vendor workflow phase',
       populate: {
         path: 'phases',
         populate: { path: 'approver' }
@@ -303,11 +331,12 @@ router.get("/", userAuth, async (req, res) => {
     
     for (const ticket of ticketList) {
       const ticketDocuments = await Document.find({ ticket: ticket._id });
-      const ticketDetails = { ...ticket, ...ticketDocuments };
+      const comments = await Comment.find({ ticket: ticket._id });
+      const ticketDetails = { ticket, ticketDocuments, comments }
       ticketListDetails.push(ticketDetails);
     }
 
-    return response.withData(res, ticketList);
+    return response.withData(res, { ticketListDetails });
   } catch (error) {
     console.log(error);
     return response.error(res, error.message);
