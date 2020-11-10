@@ -292,9 +292,9 @@ router.get("/pending", userAuth, async (req, res) => {
 
     // get matching tickets
     for ( const phase of phases ) {
-      matchingTickets = await getMatchingTickets(phase._id);
+      matchedTickets = await getMatchingTickets(phase._id);
 
-      for (const ticket of matchingTickets) {
+      for (const ticket of matchedTickets) {
         ticketDocument = await Document.find({ ticket: ticket._id });
         comments = await Comment.find({ ticket: ticket._id});
         let ticketDetail = { ticket, ticketDocument, comments }
