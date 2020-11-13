@@ -261,31 +261,35 @@ router.get("/pending", userAuth, async (req, res) => {
     phases = await Phase.find({approver: req.jwtData.userId});
 
     async function getMatchingTickets(phaseId) {
-      const matchingTickets = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
-        .populate({ 
-          path: 'user category department vendor workflow phase',
-          populate: { 
-            path: 'phases',
-            populate: { path: 'approver' } 
-          }
-        });
-      // const ticketDocuments = await Document.find({ ticket: matchingTicket._id });
-      // const comments = await Comment.find({ ticket: matchingTicket._id });
+      // const matchingTickets = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
+      //   .populate({ 
+      //     path: 'user category department vendor workflow phase',
+      //     populate: { 
+      //       path: 'phases',
+      //       populate: { path: 'approver' } 
+      //     }
+      //   });
 
-      // console.log("i got here.... SEE DOCUMENT HERE111111")
-      // console.log(matchingTicket)
-
-      // console.log("i got here.... SEE DOCUMENT HERE2222222")
-      // console.log(ticketDocuments)
-
-      // console.log("i got here.... SEE DOCUMENT HERE33333333")
-      // console.log(comments)
-
-      // const matchingTicketDetails = { matchingTicket, ticketDocuments, comments };
-      // console.log("i got here... SEE DOCUJENT HERE 44444")
-
-      // console.log(matchingTicketDetails)
-      return matchingTickets
+      const matchingTickets = await Ticket.aggregate([
+        { $match: { phase: phaseId, phaseStatus: 'pending' } },
+        { $sort: { updatedAt: -1 } },
+        { $skip: skipVal },
+        { $limit: limitVal },
+        { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
+        { "$unwind": "$user" },
+        
+        { $lookup: { from: "categories", localField: "category", foreignField: "_id", as: "category" } },
+        { "$unwind": "$category" },
+        
+        { $lookup: { from: "workflows", localField: "workflow", foreignField: "_id", as: "workflow" } },
+        { "$unwind": "$workflow" },
+  
+  
+        { $lookup: { from: "documents", localField: "_id", foreignField: "ticket", as: "ticketDocuments" } },
+        { $lookup: { from: "comments", localField: "_id", foreignField: "ticket", as: "comments" } }
+      ]);
+      
+      return matchingTickets;
     }  
 
     let tickets = [];
@@ -295,10 +299,10 @@ router.get("/pending", userAuth, async (req, res) => {
       matchedTickets = await getMatchingTickets(phase._id);
 
       for (const ticket of matchedTickets) {
-        ticketDocument = await Document.find({ ticket: ticket._id });
-        comments = await Comment.find({ ticket: ticket._id});
-        let ticketDetail = { ticket, ticketDocument, comments }
-        tickets.push(ticketDetail);
+      //   ticketDocument = await Document.find({ ticket: ticket._id });
+      //   comments = await Comment.find({ ticket: ticket._id});
+      //   let ticketDetail = { ticket, ticketDocument, comments }
+        tickets.push(ticket);
 
       }
     }
@@ -347,19 +351,80 @@ router.get("/", userAuth, async (req, res) => {
 
 // Get user owned ticket lists
 router.get("/my-tickets", userAuth, async (req, res) => {
+
   try {
     // let ticketList = await Ticket.find({ user: req.jwtData.userId }).populate('user category department vendor workflow phase');
-    let ticketList = await Ticket.find({ user: req.jwtData.userId }).populate({
-      path: 'user category department vendor workflow',
-      populate: {
-        path: 'phases',
-        populate: { path: 'approver' }
-      }
-    });
-    console.log(ticketList);
-    // let result = await ticketList.populate('user category department vendor workflow phase').execPopulate();
+    // let ticketList = await Ticket.find({ user: req.jwtData.userId })
+    // .populate({
+    //   path: 'user category department vendor workflow',
+    //   populate: {
+    //     path: 'phases',
+    //     populate: { path: 'approver' }
+    //   }
+    // });
+    // console.log(ticketList);
 
-    return response.withData(res, { mytickets: ticketList });
+    // let ticketListDetails = [];
+    
+    // for (const ticket of ticketList) {
+    //   const ticketDocuments = await Document.find({ ticket: ticket._id });
+    //   const comments = await Comment.find({ ticket: ticket._id });
+    //   const ticketDetails = { ticket, ticketDocuments, comments };
+    //   ticketListDetails.push(ticketDetails);
+    // }
+
+    if (isNaN(parseInt(req.query.offset))) skipVal = 0;
+    else skipVal = parseInt(req.query.offset);
+
+    if (isNaN(parseInt(req.query.limit))) limitVal = 100;
+    else limitVal = parseInt(req.query.limit);
+    
+    const userId = mongoose.Types.ObjectId(req.jwtData.userId)
+    console.log("userId", userId)
+
+    let ticketList = await Ticket.aggregate([
+      { $match: { user: userId } },
+      { $sort: { updatedAt: -1 } },
+      { $skip: skipVal },
+      { $limit: limitVal },
+      { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
+      { "$unwind": "$user" },
+      
+      { $lookup: { from: "categories", localField: "category", foreignField: "_id", as: "category" } },
+      { "$unwind": "$category" },
+      
+      { $lookup: { from: "workflows", localField: "workflow", foreignField: "_id", as: "workflow" } },
+      { "$unwind": "$workflow" },
+
+
+      { $lookup: { from: "documents", localField: "_id", foreignField: "ticket", as: "ticketDocuments" } },
+      { $lookup: { from: "comments", localField: "_id", foreignField: "ticket", as: "comments" } },
+
+      
+      // { "$lookup": {
+      //   "from": "document",
+      //   "pipeline": [
+      //     { "$match": { "ticket": mongoose.Types.ObjectId(_id) }},
+      //   ],
+      //   "as": "subdocument"
+      // }},
+      // { "$unwind": "$subdocument" },
+      // {
+      //   $project: {
+      //     _id: 0,
+      //     user: 1,
+      //     vendor: 1,
+      //     department: 1,
+      //     category: 1,
+      //     ticketDocuments: { $arrayElemAt: ["$ticketDocuments.document", 1] },
+      //   },
+      // }
+    ]);
+
+    console.log("ticketList", ticketList);
+
+    return response.withData(res, { ticketList });
+
   } catch (error) {
     console.log(error);
     return response.error(res, error.message);
@@ -376,12 +441,10 @@ router.get("/:id", userAuth, async (req, res) => {
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     console.log(ticket);
     let result = ticket.populate('user category department vendor workflow phase').execPopulate();
-
     return response.withData(res, result);
   } catch (error) {
     return response.error(res, error.message);
   }
-  
 });
 
 
@@ -389,12 +452,22 @@ router.get("/:id", userAuth, async (req, res) => {
 router.get("/my-tickets/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    ticket = await Ticket.find({ user: req.jwtData.userId, _id: id });
+    ticket = await Ticket.find({ user: req.jwtData.userId, _id: id })
+    .populate({
+      path: 'user category department vendor workflow',
+      populate: {
+        path: 'phases',
+        populate: { path: 'approver' }
+      }
+    });
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     console.log(ticket);
-    let result = ticket.populate('user category department vendor workflow phase').execPopulate();
+
+    const ticketDocuments = await Document.find({ ticket: id });
+    const comments = await Comment.find({ ticket: id });
+    const ticketDetails = { ticket, ticketDocuments, comments };
     
-    return response.withData(res, result);
+    return response.withData(res, ticketDetails);
   } catch (error) {
     return response.error(res, error.message);
   }
@@ -429,7 +502,6 @@ router.get("/approver/pending", userAuth, async (req, res) => {
   } catch (error) {
     return response.error(res, error.message);
   }
-  
 });
 
 // Get tickets approved count by authenticated approver

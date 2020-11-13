@@ -51,7 +51,7 @@ router.get("/check", async (req, res) => {
     respObj.appMaintainanceMesageTitle = "";
     respObj.appMaintainanceMesageBody = "";
     respObj.isShowImage = false;
-    respObj.imageUrl = ""
+    respObj.imageUrl = "";
 
     if (!req.query.v) {
         return res.send({ statusCode: 200, message: "Success", data: { optionalUpdate: false, forceUpdate: false, message: VERSION_CONSTANT.VERSION_MANDATORY } });
