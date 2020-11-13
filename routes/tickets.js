@@ -257,6 +257,14 @@ router.post("/", userAuth, upload, async (req, res) => {
 router.get("/pending", userAuth, async (req, res) => {
   
   try {
+
+    if (isNaN(parseInt(req.query.offset))) skipVal = 0;
+    else skipVal = parseInt(req.query.offset);
+
+    if (isNaN(parseInt(req.query.limit))) limitVal = 100;
+    else limitVal = parseInt(req.query.limit);
+
+    
     // Get phases belonging to user
     phases = await Phase.find({approver: req.jwtData.userId});
 
