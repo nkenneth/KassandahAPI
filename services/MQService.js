@@ -2,7 +2,7 @@
 const config = require('config');
 const CONN_URL = config.get('MQ_CONN_URL');
 const EmailService = require('./amazonSes');
-const open = require('amqplib').connect(CONN_URL);	
+const open = require('amqplib').connect(CONN_URL);
 const queue = 'sendEmails';
 
 // Send Email Publisher
@@ -12,44 +12,44 @@ const publishToQueue = payload => open.then(connection => connection.createChann
       .catch(error => console.warn(error));
 
 
-// Send Email Consumer	
-const consumeFromQueue = () => { 
+// Send Email Consumer
+const consumeFromQueue = () => {
   open.then(connection => connection.createChannel())
     .then(channel => channel.assertQueue(queue)
-    .then(() => { 
-      console.log(' [*] Waiting for messages in %s. To exit press CTRL+C', queue);	    
-      return channel.consume(queue, (msg) => {	      
+    .then(() => {
+      console.log(' [*] Waiting for messages in %s. To exit press CTRL+C', queue);
+      return channel.consume(queue, (msg) => {
         console.log('i got to consume')
-        if (msg !== null) {	        
-          const { email, firstName, mailOptions } = JSON.parse(msg.content.toString());	        
+        if (msg !== null) {
+          const { email, firstName, mailOptions } = JSON.parse(msg.content.toString());
           console.log(' [x] Received %s', email);
           switch (mailOptions.mailType) {
             case "sendUserVerificationMail":
-              // send verification mail via aws ses	        
-              EmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url).then(() => {	          
-                channel.ack(msg);	        
-              });	     
-              break;
-            
-            case "sendApprovalMail": 
-              // send approval mail via aws ses	        
-              EmailService.sendApprovalMail(email, firstName).then(() => {	          
-                channel.ack(msg);	        
+              // send verification mail via aws ses
+              EmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url).then(() => {
+                channel.ack(msg);
               });
-            
-            case "sendRejectMail": 
-              // send rejection mail via aws ses	        
-              EmailService.sendRejectMail(email, firstName).then(() => {	          
-                channel.ack(msg);	        
-              });	  
+              break;
+
+            case "sendApprovalMail":
+              // send approval mail via aws ses
+              EmailService.sendApprovalMail(email, firstName).then(() => {
+                channel.ack(msg);
+              });
+
+            case "sendRejectMail":
+              // send rejection mail via aws ses
+              EmailService.sendRejectMail(email, firstName).then(() => {
+                channel.ack(msg);
+              });
 
             default:
               break;
           }
-        }	    
-      });	  
+        }
+      });
     }))
-  .catch(error => console.warn(error));	
+  .catch(error => console.warn(error));
 };
 
 module.exports = {  publishToQueue,	  consumeFromQueue	}
