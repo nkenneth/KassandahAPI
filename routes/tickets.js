@@ -573,7 +573,7 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
   const { id } = req.params;
 
   console.log(req.jwtData.role)
-  if (req.jwtData.role.includes(config.get("approver-role")))
+  if (!req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
   
   try {

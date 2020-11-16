@@ -12,9 +12,9 @@ module.exports = async () => {
   // console.log(roleUserExists)
   if(!roleUser) roleUser = await Role.create({ role: "user", status: "active" });
 
-  var roleHOD = await Role.findOne({role:"hod"});
-  // console.log(roleHODExists)
-  if(!roleHOD) roleHOD = await Role.create({ role: "hod", status: "active" });
+  var roleApprover = await Role.findOne({role:"approver"});
+  // console.log(roleApproverExists)
+  if(!roleApprover) roleApprover = await Role.create({ role: "approver", status: "active" });
   
 
   const userExists = await User.findOne({ email: "anselm.mba@pap.com", phone: "0123456789", status: "active" });
