@@ -12,14 +12,17 @@ const { adminAuth } = require("../middleware/auth");
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        category = await Category.findById(id);
+        category = await Category.findById(id)
+        .populate({
+            path: 'workflow'
+        });
         if(!category) return response.error(res, "Category not found");
         console.log(category);
         return response.withData(res, category);
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
@@ -28,20 +31,23 @@ router.get("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
 
     try {
-        categoryList = await Category.find({});
+        categoryList = await Category.find({})
+        .populate({
+            path: 'workflow'
+        });
         console.log(categoryList);
         return response.withData(res, categoryList);
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Create category
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validateCategoryPost(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { name, description, workflow } = req.body;
 
@@ -57,14 +63,14 @@ router.post("/", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Update a category
 router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateCategoryPatch(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
     const { id } = req.params;
     const { name, description, workflow } = req.body;
 
@@ -78,7 +84,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 // Delete category

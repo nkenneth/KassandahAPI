@@ -13,14 +13,17 @@ const { WorkMailMessageFlow } = require("aws-sdk");
 router.get("/:id", adminAuth, async (req, res) => {
     const { id } = req.params;
     try {
-        workflow = await Workflow.findById(id);
+        workflow = await Workflow.findById(id)
+        .populate({
+            path: 'phases'
+        });
         if(!workflow) return response.error(res, "Workflow not found");
         console.log(workflow);
         return response.withData(res, workflow);
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
@@ -29,20 +32,23 @@ router.get("/:id", adminAuth, async (req, res) => {
 router.get("/", adminAuth, async (req, res) => {
 
     try {
-        workflowList = await Workflow.find({});
+        workflowList = await Workflow.find({})
+        .populate({
+            path: 'phases'
+        });
         console.log(workflowList);
         return response.withData(res, workflowList);
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Create workflow
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validateWorkflowPost(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { name, description, phases } = req.body;
 
@@ -58,19 +64,19 @@ router.post("/", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Update a workflow
 router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateWorkflowPatch(req.body);
-    if (error) return response.error(res, error.details[0].message); 
-    
+    if (error) return response.error(res, error.details[0].message);
+
     const { id } = req.params;
-    
+
     const { name, description, phases } = req.body;
-    
+
     try {
         let workflowExists = await Workflow.findById(id);
         if (!workflowExists) return response.error(res, WORKFLOW_CONSTANTS.WORKFLOW_NOT_FOUND);
@@ -82,7 +88,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 // Delete workflow

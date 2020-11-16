@@ -12,14 +12,17 @@ const { adminAuth } = require("../middleware/auth");
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        vendor = await Vendor.findById(id);
+        vendor = await Vendor.findById(id)
+        .populate({
+            path: 'approver'
+        });
         if(!vendor) return response.error(res, "Vendor not found");
         console.log(vendor);
         return response.withData(res, vendor);
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
@@ -34,14 +37,14 @@ router.get("/", async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Create vendor
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validateVendorPost(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified } = req.body;
 
@@ -57,15 +60,15 @@ router.post("/", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Update a vendor
 router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateVendorPatch(req.body);
-    if (error) return response.error(res, error.details[0].message); 
-    
+    if (error) return response.error(res, error.details[0].message);
+
     const { id } = req.params;
     const { name, address, city, state, email, phone, bank, accountName, accountNumber, isVerified } = req.body;
 
@@ -79,7 +82,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 

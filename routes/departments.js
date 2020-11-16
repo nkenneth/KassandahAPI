@@ -12,34 +12,40 @@ const { adminAuth } = require("../middleware/auth");
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        department = await Department.findById(id);
+        department = await Department.findById(id)
+        .populate({
+            path: 'hod deputyhod'
+        });
         if(!department) return response.error(res, "Department not found");
         console.log(department);
         return response.withData(res, department);
     } catch (error) {
         return response.error(res, error);
     }
-    
+
 });
 
 // Get Department List
 router.get("/", async (req, res) => {
 
     try {
-        departmentList = await Department.find({});
+        departmentList = await Department.find({})
+        .populate({
+            path: 'hod deputyhod'
+        });
         console.log(departmentList);
         return response.withData(res, departmentList);
     } catch (error) {
         return response.error(res, error);
     }
-    
+
 });
 
 
 // Create department
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validateDepartmentPost(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { name, hod, deputyhod, description } = req.body;
 
@@ -62,7 +68,7 @@ router.post("/", adminAuth, async (req, res) => {
 // Update a department
 router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validateDepartmentPatch(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { id } = req.params;
     const { name, description, hod, deputyhod } = req.body;
@@ -77,7 +83,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
