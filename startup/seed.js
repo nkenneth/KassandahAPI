@@ -34,5 +34,21 @@ module.exports = async () => {
     console.log("seed user \"admin\" created...");
   }
 
+  const user2Exists = await User.findOne({ email: "starboy@kassandah.com", phone: "0123456789", status: "active" });
+
+  if(!user2Exists && roleAdmin && roleUser) {
+    const password = "12345678";
+    const user2 = await User.create({ firstName: "Anselm", lastName: "Starboy", email: "starboy@kassandah.com", phone: "0123456789", password, roles: [ roleAdmin._id, roleUser._id ], status: "active", isVerified: true });
+    
+    //create salt for user password hash
+    const salt = await bcrypt.genSalt(10);
+
+    //hash password and replace user password with the hashed password
+    user2.password = await bcrypt.hash(password, salt);
+
+    // save user to db
+    await user2.save();
+    console.log("seed user2 \"admin\" created...");
+  }
   
 }

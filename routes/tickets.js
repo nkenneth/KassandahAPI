@@ -569,7 +569,7 @@ router.get("/approver/rejected", userAuth, async (req, res) => {
 
 
 // Approve ticket
-router.patch("/approve/:id", async (req, res) => {
+router.patch("/approve/:id", userAuth, async (req, res) => {
   const { id } = req.params;
 
   console.log(req.jwtData.role)

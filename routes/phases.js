@@ -12,7 +12,10 @@ const { adminAuth } = require("../middleware/auth");
 router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
-        phase = await Phase.findById(id);
+        phase = await Phase.findById(id)
+        .populate({
+            path: 'approver'
+        });
         if(!phase) return response.error(res, "Phase not found");
         console.log(phase);
         return response.withData(res, phase);
@@ -28,7 +31,10 @@ router.get("/:id", async (req, res) => {
 router.get("/", async (req, res) => {
 
     try {
-        phaseList = await Phase.find({});
+        phaseList = await Phase.find({})
+        .populate({
+            path: 'approver'
+        });
         console.log(phaseList);
         return response.withData(res, phaseList);
     } catch (error) {
