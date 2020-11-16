@@ -9,7 +9,7 @@ const { adminAuth } = require("../middleware/auth");
 
 
 // Get  Single Phase
-router.get("/:id", adminAuth, async (req, res) => {
+router.get("/:id", async (req, res) => {
     const { id } = req.params;
     try {
         phase = await Phase.findById(id);
@@ -25,7 +25,7 @@ router.get("/:id", adminAuth, async (req, res) => {
 
 
 // Get Phase List
-router.get("/", adminAuth, async (req, res) => {
+router.get("/", async (req, res) => {
 
     try {
         phaseList = await Phase.find({});

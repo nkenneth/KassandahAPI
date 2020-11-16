@@ -21,8 +21,6 @@ const consumeFromQueue = () => {
       return channel.consume(queue, (msg) => {	      
         console.log('i got to consume')
         if (msg !== null) {	        
-          console.log(JSON.parse(msg.content));
-
           const { email, firstName, mailOptions } = JSON.parse(msg.content.toString());	        
           console.log(' [x] Received %s', email);
           switch (mailOptions.mailType) {

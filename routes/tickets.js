@@ -264,7 +264,7 @@ router.get("/pending", userAuth, async (req, res) => {
     if (isNaN(parseInt(req.query.limit))) limitVal = 100;
     else limitVal = parseInt(req.query.limit);
 
-    
+
     // Get phases belonging to user
     phases = await Phase.find({approver: req.jwtData.userId});
 
@@ -285,14 +285,10 @@ router.get("/pending", userAuth, async (req, res) => {
         { $limit: limitVal },
         { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
         { "$unwind": "$user" },
-        
         { $lookup: { from: "categories", localField: "category", foreignField: "_id", as: "category" } },
         { "$unwind": "$category" },
-        
         { $lookup: { from: "workflows", localField: "workflow", foreignField: "_id", as: "workflow" } },
         { "$unwind": "$workflow" },
-  
-  
         { $lookup: { from: "documents", localField: "_id", foreignField: "ticket", as: "ticketDocuments" } },
         { $lookup: { from: "comments", localField: "_id", foreignField: "ticket", as: "comments" } }
       ]);
@@ -573,7 +569,7 @@ router.get("/approver/rejected", userAuth, async (req, res) => {
 
 
 // Approve ticket
-router.patch("/approve/:id", userAuth, async (req, res) => {
+router.patch("/approve/:id", async (req, res) => {
   const { id } = req.params;
 
   console.log(req.jwtData.role)
@@ -611,9 +607,9 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
 
       // send approved mail to requester
       const payload = {
-      email: approver.email,
-      firstName: approver.firstName,
-      mailOptions: { mailType: "sendApprovalMail" }
+        email: approver.email,
+        firstName: approver.firstName,
+        mailOptions: { mailType: "sendApprovalMail" }
       }
       await publishToQueue(payload);
 
