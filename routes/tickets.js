@@ -11,7 +11,7 @@ const fs = require("fs");
 const fileService = require("../services/fileService");
 const path = require("path");
 const router = express.Router();
-const { Ticket, 
+const { Ticket,
     validateTicketPost,
     validateTicketPatch,
     analyzeTicket} = require("../models/ticket");
@@ -33,7 +33,7 @@ const storage = multer.diskStorage({
   destination: function(req, file, cb) {
       cb(null, './storage/ticketdocs/');
   },
-  
+
   // add file extensions
   filename: function(req, file, cb) {
       let extension = path.extname(file.originalname);
@@ -47,7 +47,7 @@ let upload = multer({ storage: storage, fileFilter: fileService.documentFilter }
 
 
 // Update ticket
-router.patch("/:id", userAuth, upload, async (req, res) => { 
+router.patch("/:id", userAuth, upload, async (req, res) => {
   const { error } = validateTicketPatch(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
@@ -61,7 +61,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
 
   let ticket = await Ticket.findById(id);
   if (!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
-  
+
   //set userId
   user = await User.findOne({email: req.jwtData.email});
   if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
@@ -74,7 +74,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
     comment = new Comment({ comment: comment, user: userId, ticket: ticket._id })
     await comment.save();
   }
-  
+
   // collect reference from invoice and make lowercase
   const ref = req.body.ref.toLowerCase();
 
@@ -87,7 +87,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
 
     if(retainPhase) {
       // Update ticket entity
-      updateTicket = await ticket.updateOne({ 
+      updateTicket = await ticket.updateOne({
         ref, category, department, description, vendor, numberOfItems, items, dueDate, amount
       });
 
@@ -103,12 +103,12 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
       const workflow = workflowModel._id;
       console.log(workflow);
 
-      // Set ticket current phase 
+      // Set ticket current phase
       const phase = workflowModel.phases[0];
 
       // Update ticket entity
-      updateTicket = await ticket.updateOne({ 
-        ref, category, department, description, vendor, workflow, phase, 
+      updateTicket = await ticket.updateOne({
+        ref, category, department, description, vendor, workflow, phase,
         numberOfItems, items, dueDate, amount
       });
 
@@ -131,7 +131,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
     await publishToQueue(payload);
 
 
-  
+
     // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
     let result = await ticket.populate('user category department vendor workflow phase').execPopulate();
 
@@ -146,25 +146,25 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
 
 
 // Create ticket
-router.post("/", userAuth, upload, async (req, res) => { 
+router.post("/", userAuth, upload, async (req, res) => {
   const { error } = validateTicketPost(req.body)
   if (error) return response.validationErrors(res, error.details[0].message);
 
-  
+
   if (req.fileValidationError) {
     req.files.forEach( (file) => { fs.unlinkSync(file.path) })
     return response.error(res, req.fileValidationError);
   }
-  
+
 
   // collect reference from invoice and make lowercase
   const ref = req.body.ref;
-  
+
   //set userId
   user = await User.findOne({email: req.jwtData.email});
   if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
   const userId = user._id;
-  
+
   let isPossibleDuplicate = false;
 
   const { category, department, vendor, numberOfItems, items, description, dueDate, amount, comment } = req.body;
@@ -188,13 +188,13 @@ router.post("/", userAuth, upload, async (req, res) => {
     const workflow = workflowModel._id;
     console.log(workflow);
 
-    // Set ticket current phase 
+    // Set ticket current phase
     const phase = workflowModel.phases[0];
 
     // Instatiate ticket entity
-    ticket = new Ticket({ 
-      ref, ticketRef, user: userId, category, department, 
-      description, vendor, workflow, phase, numberOfItems, 
+    ticket = new Ticket({
+      ref, ticketRef, user: userId, category, department,
+      description, vendor, workflow, phase, numberOfItems,
       items, dueDate, amount, isPossibleDuplicate
     });
 
@@ -204,7 +204,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     // Store document paths
     console.log(req.files)
     if (!commonFunctions.isEmpty(req.files)) {
-      
+
       for(const document of req.files) {
         documentPath = document.path.replace(/storage/, `${config.get('APP_URL')}`);
 
@@ -217,7 +217,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     // Store comment
     console.log(req.body.comment);
     if (comment != "" || comment != null) {
-      
+
         let commentModel = await Comment.create({ ticket: ticket._id, user: user._id, comment: comment });
         console.log(`Comment stored: ${comment}`);
 
@@ -255,7 +255,7 @@ router.post("/", userAuth, upload, async (req, res) => {
 
 // Get ticket list awaiting approval by authenticated user
 router.get("/pending", userAuth, async (req, res) => {
-  
+
   try {
 
     if (isNaN(parseInt(req.query.offset))) skipVal = 0;
@@ -270,11 +270,11 @@ router.get("/pending", userAuth, async (req, res) => {
 
     async function getMatchingTickets(phaseId) {
       // const matchingTickets = await Ticket.find({ phase: phaseId, phaseStatus: 'pending' })
-      //   .populate({ 
+      //   .populate({
       //     path: 'user category department vendor workflow phase',
-      //     populate: { 
+      //     populate: {
       //       path: 'phases',
-      //       populate: { path: 'approver' } 
+      //       populate: { path: 'approver' }
       //     }
       //   });
 
@@ -292,9 +292,9 @@ router.get("/pending", userAuth, async (req, res) => {
         { $lookup: { from: "documents", localField: "_id", foreignField: "ticket", as: "ticketDocuments" } },
         { $lookup: { from: "comments", localField: "_id", foreignField: "ticket", as: "comments" } }
       ]);
-      
+
       return matchingTickets;
-    }  
+    }
 
     let tickets = [];
 
@@ -318,7 +318,7 @@ router.get("/pending", userAuth, async (req, res) => {
     console.log(error);
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -336,7 +336,7 @@ router.get("/", userAuth, async (req, res) => {
     console.log(ticketList);
 
     let ticketListDetails = [];
-    
+
     for (const ticket of ticketList) {
       const ticketDocuments = await Document.find({ ticket: ticket._id });
       const comments = await Comment.find({ ticket: ticket._id });
@@ -349,7 +349,7 @@ router.get("/", userAuth, async (req, res) => {
     console.log(error);
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -369,7 +369,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
     // console.log(ticketList);
 
     // let ticketListDetails = [];
-    
+
     // for (const ticket of ticketList) {
     //   const ticketDocuments = await Document.find({ ticket: ticket._id });
     //   const comments = await Comment.find({ ticket: ticket._id });
@@ -382,7 +382,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
 
     if (isNaN(parseInt(req.query.limit))) limitVal = 100;
     else limitVal = parseInt(req.query.limit);
-    
+
     const userId = mongoose.Types.ObjectId(req.jwtData.userId)
     console.log("userId", userId)
 
@@ -393,10 +393,10 @@ router.get("/my-tickets", userAuth, async (req, res) => {
       { $limit: limitVal },
       { $lookup: { from: "users", localField: "user", foreignField: "_id", as: "user" } },
       { "$unwind": "$user" },
-      
+
       { $lookup: { from: "categories", localField: "category", foreignField: "_id", as: "category" } },
       { "$unwind": "$category" },
-      
+
       { $lookup: { from: "workflows", localField: "workflow", foreignField: "_id", as: "workflow" } },
       { "$unwind": "$workflow" },
 
@@ -404,7 +404,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
       { $lookup: { from: "documents", localField: "_id", foreignField: "ticket", as: "ticketDocuments" } },
       { $lookup: { from: "comments", localField: "_id", foreignField: "ticket", as: "comments" } },
 
-      
+
       // { "$lookup": {
       //   "from": "document",
       //   "pipeline": [
@@ -433,7 +433,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
     console.log(error);
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -470,12 +470,12 @@ router.get("/my-tickets/:id", userAuth, async (req, res) => {
     const ticketDocuments = await Document.find({ ticket: id });
     const comments = await Comment.find({ ticket: id });
     const ticketDetails = { ticket, ticketDocuments, comments };
-    
+
     return response.withData(res, ticketDetails);
   } catch (error) {
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -486,7 +486,7 @@ router.get("/approver/pending", userAuth, async (req, res) => {
   console.log(req.jwtData.role)
   if (req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
-  
+
   try {
 
     approverPhases = await Phase.find({ approver: req.jwtData.userId });
@@ -500,7 +500,7 @@ router.get("/approver/pending", userAuth, async (req, res) => {
 
     console.log(tickets.length);
     // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
-    
+
     return response.withData(res, tickets.length);
 
   } catch (error) {
@@ -514,7 +514,7 @@ router.get("/approver/approved", userAuth, async (req, res) => {
   console.log(req.jwtData.role)
   if (req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
-  
+
   try {
 
     approverPhases = await Phase.find({ approver: req.jwtData.userId });
@@ -528,13 +528,13 @@ router.get("/approver/approved", userAuth, async (req, res) => {
 
     console.log(tickets.length);
     // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
-    
+
     return response.withData(res, tickets.length);
 
   } catch (error) {
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -544,7 +544,7 @@ router.get("/approver/rejected", userAuth, async (req, res) => {
   console.log(req.jwtData.role)
   if (req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
-  
+
   try {
 
     approverPhases = await Phase.find({ approver: req.jwtData.userId });
@@ -558,13 +558,13 @@ router.get("/approver/rejected", userAuth, async (req, res) => {
 
     console.log(tickets.length);
     // let result = tickets.populate('user category department vendor workflow phase').execPopulate();
-    
+
     return response.withData(res, tickets.length);
 
   } catch (error) {
     return response.error(res, error.message);
   }
-  
+
 });
 
 
@@ -575,15 +575,15 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
   console.log(req.jwtData.role)
   if (!req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
-  
+
   try {
     // get ticket and forward or mark as approved
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
-    if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved") 
+    if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
       return response.error(res, TICKET_CONSTANTS.TICKET_TREATED);
     console.log(ticket);
-    
+
     workflow = await Workflow.findById(ticket.workflow);
     if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
@@ -649,7 +649,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
   const { id } = req.params;
 
   console.log(req.jwtData.role)
-  if (req.jwtData.role.includes(config.get("approver-role")))
+  if (!req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
   try {
@@ -657,10 +657,10 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     // get ticket and mark as rejected
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
-    if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved") 
+    if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
       return response.error(res, TICKET_CONSTANTS.TICKET_TREATED);
     console.log(ticket);
-    
+
     workflow = await Workflow.findById(ticket.workflow);
     if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
