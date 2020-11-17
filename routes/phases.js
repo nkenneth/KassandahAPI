@@ -22,7 +22,6 @@ router.get("/:id", async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
 });
 
 
@@ -40,14 +39,14 @@ router.get("/", async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Create phase
 router.post("/", adminAuth, async (req, res) => {
     const { error } = validatePhasePost(req.body);
-    if (error) return response.error(res, error.details[0].message); 
+    if (error) return response.error(res, error.details[0].message);
 
     const { name, phaseType, approver, sla, isDynamic } = req.body;
 
@@ -63,19 +62,19 @@ router.post("/", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 
 // Update a phase
 router.patch("/:id", adminAuth, async (req, res) => {
     const { error } = validatePhasePatch(req.body);
-    if (error) return response.error(res, error.details[0].message); 
-    
+    if (error) return response.error(res, error.details[0].message);
+
     const { id } = req.params;
-    
+
     const { name, phaseType, approver, sla, isDynamic } = req.body;
-    
+
     try {
         let phaseExists = await Phase.findById(id);
         if (!phaseExists) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
@@ -86,7 +85,7 @@ router.patch("/:id", adminAuth, async (req, res) => {
     } catch (error) {
         return response.error(res, error.message);
     }
-    
+
 });
 
 // Delete phase
