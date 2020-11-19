@@ -177,4 +177,42 @@ router.get("/approver/ticket-rejected", userAuth, async (req, res) => {
 });
 
 
+// Get pending tickets by approver
+router.get("/approver/ticket-pending", userAuth, async (req, res) => {
+    try {
+        const approverPhases = await Phase.find({ approver: req.jwtData.userId });
+        if(!approverPhases) return response.withData(res, { rejectedTicketsCount: 0 });
+
+        let rejectedTicketCount = 0;
+
+        for (const approverPhase of approverPhases) {
+            const approverPhaseId = approverPhase._id
+            let workflows = await Workflow.find({ phases: approverPhaseId });
+            let tickets = await Ticket.find({ workflow: { $in: workflows }});
+            for (const ticket of tickets) {
+                workflow = await Workflow.findById(ticket.workflow);
+                if(workflow) {
+                    let phaseCount = workflow.phases.length
+                    console.log("COUNT phaseCount: " + phaseCount);
+                    let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+                    console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+                    let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+                    console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+                    if( currentPhaseIndex == approverPhaseIndex && ticket.phaseStatus == "pending" ) {
+                        rejectedTicketCount++;
+                    }
+                }
+            }
+        }
+
+        return response.withData(res, { rejectedTicketsCount: rejectedTicketCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+
 module.exports = router;
