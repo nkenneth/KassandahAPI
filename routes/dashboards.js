@@ -6,9 +6,10 @@ const response = require("../services/response");
 const router = express.Router();
 const { Ticket } = require("../models/ticket");
 const { User } = require("../models/user");
-const { userAuth } = require("../middleware/auth");
+const { userAuth, adminAuth } = require("../middleware/auth");
 const { Phase } = require("../models/phase");
 const { Workflow } = require("../models/workflow");
+const { Department } = require("../models/department");
 
 
 // Get  total user tickets count
@@ -207,6 +208,100 @@ router.get("/approver/ticket-pending", userAuth, async (req, res) => {
         }
 
         return response.withData(res, { rejectedTicketsCount: rejectedTicketCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////// ADMIN DASHBOARD STATS //////////////////////////////////////////////////////
+
+// Count all users
+router.get("/admin/active-user-count", adminAuth, async (req, res) => {
+    try {
+        const userCount = await User.count({ status: "active", isVerified: "true" });
+        return response.withData(res, { userCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+// Count all users
+router.get("/admin/user-count", adminAuth, async (req, res) => {
+    try {
+        const userCount = await User.count();
+        return response.withData(res, { userCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+// Count all departments
+router.get("/admin/user-count", adminAuth, async (req, res) => {
+    try {
+        const departmentCount = await Department.count();
+        return response.withData(res, { departmentCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+
+// Count all departments
+router.get("/admin/department-count", adminAuth, async (req, res) => {
+    try {
+        const departmentCount = await Department.count();
+        return response.withData(res, { departmentCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+// Count confirmed requestss
+router.get("/admin/ticket-count-approved", adminAuth, async (req, res) => {
+    try {
+        const ticketCount = await Ticket.count({ status: "approved" });
+        return response.withData(res, { ticketCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+
+
+// Count rejected requestss
+router.get("/admin/ticket-count-rejected", adminAuth, async (req, res) => {
+    try {
+        const ticketCount = await Ticket.count({ status: "rejected" });
+        return response.withData(res, { ticketCount });
+
+    } catch (error) {
+        console.error(error.message);
+        return response.error(res, error.message);
+    }
+});
+
+
+// Count pending requestss
+router.get("/admin/ticket-count-pending", adminAuth, async (req, res) => {
+    try {
+        const ticketCount = await Ticket.count({ status: "pending" });
+        return response.withData(res, { ticketCount });
 
     } catch (error) {
         console.error(error.message);
