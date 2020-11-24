@@ -14,7 +14,7 @@ const router = express.Router();
 const { Ticket,
     validateTicketPost,
     validateTicketPatch,
-    analyzeTicket} = require("../models/ticket");
+    analyzeTicket } = require("../models/ticket");
 const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
@@ -301,8 +301,11 @@ router.get("/pending", userAuth, async (req, res) => {
     // get matching tickets
     for ( const phase of phases ) {
       matchedTickets = await getMatchingTickets(phase._id);
+      console.log("matchedTickets", matchedTickets);
       // add related document and comments to each ticket
       for (const ticket of matchedTickets) {
+        console.log("ticket", ticket);
+        if (!ticket) return response.error(res, "Error fetching tickets");
         let ticketObj = ticket.toObject();
         ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
         ticketObj.comments = await Comment.find({ ticket: ticket._id});
@@ -469,6 +472,7 @@ router.get("/my-tickets/:id", userAuth, async (req, res) => {
         populate: { path: 'approver' }
       }
     });
+
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
 
     let ticketObj = ticket.toObject();

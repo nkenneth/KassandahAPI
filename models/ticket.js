@@ -100,15 +100,15 @@ async function analyzeTicket( category, vendor, amount, dueDate, ref ) {
         dueDate_match: false,
         score: 0
     };
-    
+
     let ticketExists = await Ticket.findOne({ ref });
-    
+
     if (ticketExists) {
         payload.ref_match = true;
-        payload.score = 100; 
+        payload.score = 100;
         return payload;
     }
-    
+
     let ticketMatchExists = await Ticket.findOne({ category, vendor, amount, dueDate });
 
     if (ticketMatchExists) {
@@ -116,7 +116,7 @@ async function analyzeTicket( category, vendor, amount, dueDate, ref ) {
         payload.vendor_match = true;
         payload.amount_match = true;
         payload.dueDate_match = true;
-        payload.score = 100; 
+        payload.score = 100;
         return payload;
     }
 
@@ -128,7 +128,7 @@ async function analyzeTicket( category, vendor, amount, dueDate, ref ) {
         payload.vendor_match = true;
         payload.amount_match = true;
         payload.dueDate_match = true;
-        payload.score = 75; 
+        payload.score = 75;
         return payload;
     }
 
