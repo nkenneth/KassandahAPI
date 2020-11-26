@@ -605,15 +605,27 @@ router.get("/approver/ticket-approved", userAuth, async (req, res) => {
             if( currentPhaseIndex == approverPhaseIndex
               && ticket.status !== "pending"
               && ticket.status !== "rejected") {
-              let approvedTicket = await ticket.populate(
-                'user category department vendor workflow phase').execPopulate();
+              let approvedTicket = await ticket
+              .populate({
+                path: 'user category department vendor workflow phase',
+                populate: {
+                  path: 'phases',
+                  populate: { path: 'approver' }
+                }
+              }).execPopulate();
               let ticketObj = approvedTicket.toObject();
               ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
               ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
               approvedTickets.push(ticketObj);
             } else if( currentPhaseIndex > approverPhaseIndex) {
-              let approvedTicket = await ticket.populate(
-                'user category department vendor workflow phase').execPopulate();
+              let approvedTicket = await ticket
+              .populate({
+                path: 'user category department vendor workflow phase',
+                populate: {
+                  path: 'phases',
+                  populate: { path: 'approver' }
+                }
+              }).execPopulate();
               let ticketObj = approvedTicket.toObject();
               ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
               ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
@@ -656,8 +668,15 @@ router.get("/approver/tickets", userAuth, async (req, res) => {
           console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
 
           if( currentPhaseIndex >= approverPhaseIndex ) {
-            let approverTicket = await ticket.populate(
-              'user category department vendor workflow phase').execPopulate();
+            let approverTicket = await ticket
+            .populate({
+                path: 'user category department vendor workflow phase',
+                populate: {
+                  path: 'phases',
+                  populate: { path: 'approver' }
+                }
+            }).execPopulate();
+
             let ticketObj = approverTicket.toObject();
             ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
             ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
@@ -699,8 +718,15 @@ router.get("/approver/ticket-rejected", userAuth, async (req, res) => {
           console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
 
           if( currentPhaseIndex == approverPhaseIndex && ticket.phaseStatus == "rejected" ) {
-            let rejectedTicket = await ticket.populate(
-              'user category department vendor workflow phase').execPopulate();
+            let rejectedTicket = await ticket
+            .populate({
+              path: 'user category department vendor workflow phase',
+              populate: {
+                path: 'phases',
+                populate: { path: 'approver' }
+              }
+            }).execPopulate();
+
             let ticketObj = rejectedTicket.toObject();
             ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
             ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
@@ -742,8 +768,15 @@ router.get("/approver/ticket-pending", userAuth, async (req, res) => {
           console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
 
           if( currentPhaseIndex == approverPhaseIndex && ticket.phaseStatus == "pending" ) {
-            let pendingTicket = await ticket.populate(
-              'user category department vendor workflow phase').execPopulate();
+            let pendingTicket = await ticket
+            .populate({
+              path: 'user category department vendor workflow phase',
+              populate: {
+                path: 'phases',
+                populate: { path: 'approver' }
+              }
+            }).execPopulate();
+
             let ticketObj = pendingTicket.toObject();
             ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
             ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
