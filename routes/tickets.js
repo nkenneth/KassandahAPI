@@ -579,6 +579,192 @@ router.get("/approver/rejected", userAuth, async (req, res) => {
 });
 
 
+// get all approver tickets approved
+router.get("/approver/ticket-approved", userAuth, async (req, res) => {
+  try {
+    const approverPhases = await Phase.find({ approver: req.jwtData.userId });
+    if(!approverPhases) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
+    let approvedTickets = [];
+
+    for (const approverPhase of approverPhases) {
+      const approverPhaseId = approverPhase._id
+      let workflows = await Workflow.find({ phases: approverPhaseId });
+      let tickets = await Ticket.find({ workflow: { $in: workflows }});
+      for (const ticket of tickets) {
+        workflow = await Workflow.findById(ticket.workflow);
+        if(workflow) {
+          let phaseCount = workflow.phases.length
+          console.log("COUNT phaseCount: " + phaseCount);
+          let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+          console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+          let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+          console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+          if( currentPhaseIndex >= approverPhaseIndex ) {
+            if( currentPhaseIndex == approverPhaseIndex
+              && ticket.status !== "pending"
+              && ticket.status !== "rejected") {
+              let approvedTicket = await ticket.populate(
+                'user category department vendor workflow phase').execPopulate();
+              let ticketObj = approvedTicket.toObject();
+              ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
+              ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
+              approvedTickets.push(ticketObj);
+            } else if( currentPhaseIndex > approverPhaseIndex) {
+              let approvedTicket = await ticket.populate(
+                'user category department vendor workflow phase').execPopulate();
+              let ticketObj = approvedTicket.toObject();
+              ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
+              ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
+              approvedTickets.push(ticketObj);
+            }
+          }
+        }
+      }
+    }
+
+    return response.withData(res, { approvedTickets });
+
+  } catch (error) {
+      console.error(error.message);
+      return response.error(res, error.message);
+  }
+});
+
+
+// get all approver tickets
+router.get("/approver/tickets", userAuth, async (req, res) => {
+  try {
+    const approverPhases = await Phase.find({ approver: req.jwtData.userId });
+    if(!approverPhases) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
+    let allApproverTickets = [];
+
+    for (const approverPhase of approverPhases) {
+      const approverPhaseId = approverPhase._id
+      let workflows = await Workflow.find({ phases: approverPhaseId });
+      let tickets = await Ticket.find({ workflow: { $in: workflows }});
+      for (const ticket of tickets) {
+        workflow = await Workflow.findById(ticket.workflow);
+        if(workflow) {
+          let phaseCount = workflow.phases.length
+          console.log("COUNT phaseCount: " + phaseCount);
+          let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+          console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+          let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+          console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+          if( currentPhaseIndex >= approverPhaseIndex ) {
+            let approverTicket = await ticket.populate(
+              'user category department vendor workflow phase').execPopulate();
+            let ticketObj = approverTicket.toObject();
+            ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
+            ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
+            allApproverTickets.push(ticketObj);
+          }
+        }
+      }
+    }
+
+    return response.withData(res, { allApproverTickets });
+
+  } catch (error) {
+      console.error(error.message);
+      return response.error(res, error.message);
+  }
+});
+
+
+// Get all approver tickets rejected
+router.get("/approver/ticket-rejected", userAuth, async (req, res) => {
+  try {
+    const approverPhases = await Phase.find({ approver: req.jwtData.userId });
+    if(!approverPhases) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
+    let rejectedTickets = [];
+
+    for (const approverPhase of approverPhases) {
+      const approverPhaseId = approverPhase._id
+      let workflows = await Workflow.find({ phases: approverPhaseId });
+      let tickets = await Ticket.find({ workflow: { $in: workflows }});
+      for (const ticket of tickets) {
+        workflow = await Workflow.findById(ticket.workflow);
+        if(workflow) {
+          let phaseCount = workflow.phases.length
+          console.log("COUNT phaseCount: " + phaseCount);
+          let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+          console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+          let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+          console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+          if( currentPhaseIndex == approverPhaseIndex && ticket.phaseStatus == "rejected" ) {
+            let rejectedTicket = await ticket.populate(
+              'user category department vendor workflow phase').execPopulate();
+            let ticketObj = rejectedTicket.toObject();
+            ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
+            ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
+            rejectedTickets.push(ticketObj);
+          }
+        }
+      }
+    }
+
+    return response.withData(res, { rejectedTickets });
+
+  } catch (error) {
+    console.error(error.message);
+    return response.error(res, error.message);
+  }
+});
+
+
+// Get all approver tickets pending
+router.get("/approver/ticket-pending", userAuth, async (req, res) => {
+  try {
+    const approverPhases = await Phase.find({ approver: req.jwtData.userId });
+    if(!approverPhases) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
+    let pendingTickets = [];
+
+    for (const approverPhase of approverPhases) {
+      const approverPhaseId = approverPhase._id
+      let workflows = await Workflow.find({ phases: approverPhaseId });
+      let tickets = await Ticket.find({ workflow: { $in: workflows }});
+      for (const ticket of tickets) {
+        workflow = await Workflow.findById(ticket.workflow);
+        if(workflow) {
+          let phaseCount = workflow.phases.length
+          console.log("COUNT phaseCount: " + phaseCount);
+          let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+          console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+          let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+          console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+          if( currentPhaseIndex == approverPhaseIndex && ticket.phaseStatus == "pending" ) {
+            let pendingTicket = await ticket.populate(
+              'user category department vendor workflow phase').execPopulate();
+            let ticketObj = pendingTicket.toObject();
+            ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
+            ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
+            pendingTickets.push(ticketObj);
+          }
+        }
+      }
+    }
+
+    return response.withData(res, { pendingTickets });
+
+  } catch (error) {
+    console.error(error.message);
+    return response.error(res, error.message);
+  }
+});
+
+
+
+
+
 // Approve ticket
 router.patch("/approve/:id", userAuth, async (req, res) => {
   const { id } = req.params;
