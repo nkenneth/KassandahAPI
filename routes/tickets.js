@@ -241,7 +241,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     // let result = _.pick(ticket, ["ticketRef", "items", "numberOfItems", "category", "department", "vendor", "workflow", "dueDate", "amount"]);
     let ticketDetails = await ticket.populate('user category department vendor workflow phase document').execPopulate();
     let ticketDocuments = await Document.find({ticket: ticket._id});
-    let comments = await Comment.find({ticket: ticket._id});
+    let comments = await Comment.find({ticket: ticket._id}).populate('user');
 
     // return response.success(res, TICKET_CONSTANTS.TICKET_CREATED);
     return response.withDataAndMsg(res, 'Ticket submitted successfully!', { ticketDetails, ticketDocuments, comments });
@@ -308,7 +308,7 @@ router.get("/pending", userAuth, async (req, res) => {
         if (!ticket) return response.error(res, "Error fetching tickets");
         let ticketObj = ticket.toObject();
         ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
-        ticketObj.comments = await Comment.find({ ticket: ticket._id});
+        ticketObj.comments = await Comment.find({ ticket: ticket._id}).populate('user');
         tickets.push(ticketObj);
       }
     }
@@ -341,7 +341,7 @@ router.get("/", userAuth, async (req, res) => {
 
     for (const ticket of ticketList) {
       const ticketDocuments = await Document.find({ ticket: ticket._id });
-      const comments = await Comment.find({ ticket: ticket._id });
+      const comments = await Comment.find({ ticket: ticket._id }).populate('user');
       const ticketDetails = { ticket, ticketDocuments, comments }
       ticketListDetails.push(ticketDetails);
     }
@@ -372,7 +372,7 @@ router.get("/my-tickets", userAuth, async (req, res) => {
     for (const ticket of tickets) {
       let ticketObj = ticket.toObject();
       ticketObj.ticketDocuments = await Document.find({ ticket: ticket._id });
-      ticketObj.comments = await Comment.find({ ticket: ticket._id });
+      ticketObj.comments = await Comment.find({ ticket: ticket._id }).populate('user');
       ticketList.push(ticketObj);
     }
 
@@ -464,7 +464,7 @@ router.get("/:id", userAuth, async (req, res) => {
 router.get("/my-tickets/:id", userAuth, async (req, res) => {
   const { id } = req.params;
   try {
-    ticket = await Ticket.find({ user: req.jwtData.userId, _id: id })
+    ticket = await Ticket.findOne({ user: req.jwtData.userId, _id: id })
     .populate({
       path: 'user category department vendor phase workflow',
       populate: {
@@ -478,7 +478,7 @@ router.get("/my-tickets/:id", userAuth, async (req, res) => {
     let ticketObj = ticket.toObject();
 
     ticketObj.ticketDocuments = await Document.find({ ticket: id });
-    ticketObj.comments = await Comment.find({ ticket: id });
+    ticketObj.comments = await Comment.find({ ticket: id }).populate('user');
 
     return response.withData(res, ticketObj);
 
@@ -592,7 +592,7 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
-      return response.error(res, TICKET_CONSTANTS.TICKET_TREATED);
+      return response.error(res, TICKET_CONSTANTS.TICKET_ALREADY_TREATED);
     console.log(ticket);
 
     workflow = await Workflow.findById(ticket.workflow);
@@ -669,7 +669,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
     if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
-      return response.error(res, TICKET_CONSTANTS.TICKET_TREATED);
+      return response.error(res, TICKET_CONSTANTS.TICKET_ALREADY_TREATED);
     console.log(ticket);
 
     workflow = await Workflow.findById(ticket.workflow);
@@ -705,6 +705,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     }
 
     ticket.phaseStatus = "rejected";
+    ticket.status = "rejected";
     await ticket.save();
 
     // send rejected mail to requester

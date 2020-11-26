@@ -72,7 +72,7 @@ const TICKET_CONSTANTS = {
   TICKET_WRONG_OWNER: "Not permited to update this ticket",
   TICKET_EXPIRED: "Ticket expired",
   TICKET_NOT_FOUND: "Ticket NOT found",
-  TICKET_TREATED: "Ticket ALREADY treated",
+  TICKET_ALREADY_TREATED: "Ticket ALREADY treated",
   TICKET_WORKFLOW_ERROR: "Error occured while processing ticket workflow",
   TICKET_PHASE_ERROR: "Error occured while processing ticket phase"
 };
