@@ -87,7 +87,6 @@ router.get("/", adminAuth, async (req, res) => {
         firstName: 1,
         lastName: 1,
         email: 1,
-        phone: 1,
         department: 1,
         isVerified: 1,
         status: 1,
@@ -101,6 +100,8 @@ router.get("/", adminAuth, async (req, res) => {
       },
     },
   ]);
+
+  // let userList = await User.find({}).populate( 'department' );
 
   res.send({ statusCode: 200, message: "Success", data: { userList } });
 });
