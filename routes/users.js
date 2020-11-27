@@ -71,6 +71,11 @@ router.get("/", adminAuth, async (req, res) => {
 
   let userList = await User.aggregate([
     { $match: criteria },
+    { $lookup: { from: "roles", localField: "roles", foreignField: "_id", as: "roles" } },
+
+    { $lookup: { from: "departments", localField: "department", foreignField: "_id", as: "department" } },
+    { $unwind: "$department" },
+
     { $sort: { insertDate: -1 } },
     { $skip: skipVal },
     { $limit: limitVal },
@@ -185,7 +190,7 @@ router.post("/", async (req, res) => {
 
     // Save the verification token
     token.save(function (err) {
-        if (err) return response.error(res, err.message, 500); 
+        if (err) return response.error(res, err.message, 500);
     });
 
 
@@ -201,10 +206,10 @@ router.post("/", async (req, res) => {
     }
     await publishToQueue(payload);
 
-    
+
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
-    
+
   } catch (err) {
     console.error(err.message);
     return response.error(res, err.message, 500);
@@ -260,8 +265,8 @@ router.put("/", userAuth, async (req, res) => {
 
 // verify email
 router.get("/verify/:token", async (req, res) => {
-  
-  const { token } = req.params; 
+
+  const { token } = req.params;
   if(!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   console.log("token isssss:::::" + token);
@@ -270,11 +275,11 @@ router.get("/verify/:token", async (req, res) => {
   Token.findOne({ token }, function (err, token) {
     if (!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
     // if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
-    
+
     // If we found a token, find a matching user
     User.findOne({ _id: token._userId }, function (err, user) {
-        if (!user) return response.redirect(res, USER_CONSTANTS.INVALID_USER); 
-        // if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER); 
+        if (!user) return response.redirect(res, USER_CONSTANTS.INVALID_USER);
+        // if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
         if (user.isVerified) return response.redirect(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
         // if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
 
@@ -282,7 +287,7 @@ router.get("/verify/:token", async (req, res) => {
         user.isVerified = true;
         user.status = "active";
         user.save(function (err) {
-            if (err) return response.error(res, err.message); 
+            if (err) return response.error(res, err.message);
             return response.redirect(res);
         });
     });
@@ -291,12 +296,12 @@ router.get("/verify/:token", async (req, res) => {
 
 // resend verify email
 router.post("/resend", async (req, res) => {
- 
-  // Check for validation errors    
+
+  // Check for validation errors
   const { error } = validateEmail(req.body);
   if (error) return response.validationErrors(res, error.details[0].message);
 
-  const { email } = req.body; 
+  const { email } = req.body;
   console.log("email isssss:::::" + email);
 
   const user = await User.findOne({email});
@@ -308,7 +313,7 @@ router.post("/resend", async (req, res) => {
 
   // Save the verification token
   token.save(function (err) {
-      if (err) return response.error(res, err.message, 500); 
+      if (err) return response.error(res, err.message, 500);
   });
   var host = config.get("app_domain");
   console.log(`host url is: ${host}`);
@@ -334,7 +339,7 @@ router.post("/login", async (req, res) => {
   if (!user.isVerified) return response.error(res, USER_CONSTANTS.NOT_YET_VERIFIED);
 
   if (user.status != "active") return response.error(res, AUTH_CONSTANTS.INACTIVE_ACCOUNT);
-    
+
   const validPassword = await bcrypt.compare(req.body.password, user.password);
   if (!validPassword) return response.error(res, AUTH_CONSTANTS.INVALID_CREDENTIALS);
 
@@ -379,11 +384,11 @@ router.post("/login", async (req, res) => {
 // user password change
 router.post("/password/change", userAuth, async (req, res) => {
   const { error } = validateChangePassword(req.body);
-  if (error) return response.error(res, error.details[0].message); 
+  if (error) return response.error(res, error.details[0].message);
 
   let user = await User.findById(req.jwtData.userId);
   if (!user) return response.error(res, AUTH_CONSTANTS.INVALID_USER);
-  
+
   const { oldPassword, newPassword } = req.body;
 
   const validPassword = await bcrypt.compare(oldPassword, user.password);
@@ -397,17 +402,17 @@ router.post("/password/change", userAuth, async (req, res) => {
 
   user.password = encryptPassword;
   await user.save();
-  return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS); 
+  return response.success(res, AUTH_CONSTANTS.PASSWORD_CHANGE_SUCCESS);
 
 });
 
 router.post("/password/forgot", async (req, res) => {
 
-  // Check for validation errors    
+  // Check for validation errors
   const { error } = validateEmail(req.body);
   if (error) return response.validationErrors(res, error.details[0].message);
 
-  const { email } = req.body; 
+  const { email } = req.body;
   console.log("email isssss:::::" + email);
 
   const user = await User.findOne({email});
@@ -417,18 +422,18 @@ router.post("/password/forgot", async (req, res) => {
   user.resetPasswordToken = resetToken;
   user.resetPasswordExpires = Date.now() + 3600000; //expires in an hour
   user.save(function (err) {
-    if (err) return response.error(res, err.message, 500); 
+    if (err) return response.error(res, err.message, 500);
   });
 
   await sendResetPasswordMail(user.email, user.firstName, `http://${req.headers.host}/api/user/password/forgot/${resetToken}`);
 
-  return response.success(res, USER_CONSTANTS.RESET_PASSWORD_EMAIL_SENT); 
+  return response.success(res, USER_CONSTANTS.RESET_PASSWORD_EMAIL_SENT);
 
 });
 
 router.get("/password/forgot/:token", async (req, res) => {
 
-  const { token } = req.params; 
+  const { token } = req.params;
 
   // Find a matching token
   user = await User.findOne({resetPasswordToken: token, resetPasswordExpires: {$gt: Date.now()}});
@@ -463,7 +468,7 @@ router.post("/password/reset/:token", async (req, res) => {
 
     // save user to db
     await user.save();
-    
+
     return response.success(res, USER_CONSTANTS.PASSWORD_CHANGE_SUCCESS);
 
   } catch (err) {
@@ -508,7 +513,7 @@ router.post("/refresh-token", async (req, res) => {
 
     await user.save();
     return response.withData(res, { token: token, refreshToken: refreshToken });
-    
+
   } catch (error) {
     return response.error(res, error.message);
   }
