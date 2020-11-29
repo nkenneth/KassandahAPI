@@ -170,7 +170,7 @@ router.patch("/user/deactivate/:id", adminAuth, async (req, res) => {
   const { id } = req.params;
 
   try {
-    user = await User.findById(id);
+    const user = await User.findById(id);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
     if (user.status == "inactive") return response.error(res, "User already in-active");
 
@@ -191,7 +191,7 @@ router.patch("/user/activate/:id", adminAuth, async (req, res) => {
   const { id } = req.params;
 
   try {
-    user = await User.findById(id);
+    const user = await User.findById(id);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
     if (user.status == "active") return response.error(res, "User already active");
 

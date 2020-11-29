@@ -102,7 +102,6 @@ router.get("/", adminAuth, async (req, res) => {
   ]);
 
   // let userList = await User.find({}).populate( 'department' );
-
   res.send({ statusCode: 200, message: "Success", data: { userList } });
 });
 
