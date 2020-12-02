@@ -378,6 +378,7 @@ router.post("/login", async (req, res) => {
     "profilePic",
     "lastLogin",
   ]);
+  //TODO: add department
   return response.withData(res, {token: token, refreshToken: refreshToken, details: details, roles: rolesArray });
 });
 
