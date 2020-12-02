@@ -408,7 +408,7 @@ router.post("/login", async (req, res) => {
   //   },
   // ]);
 
-  return response.withData(res, {token: token, refreshToken: refreshToken, details: details, role: rolesArray });
+  return response.withData(res, {token: token, refreshToken: refreshToken, details: details, roles: rolesArray });
 });
 
 // user password change
