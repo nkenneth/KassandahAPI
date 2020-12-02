@@ -369,46 +369,46 @@ router.post("/login", async (req, res) => {
   await user.save();
   user.userId = user._id;
 
-  // let details = _.pick(user, [
-  //   "userId",
-  //   "firstName",
-  //   "lastName",
-  //   "phone",
-  //   "email",
-  //   "department",
-  //   "status",
-  //   "profilePic",
-  //   "lastLogin",
-  // ]);
-
-  let details = await User.aggregate([
-    { $match: criteria },
-    { $lookup: { from: "roles", localField: "roles", foreignField: "_id", as: "roles" } },
-    { $lookup: { from: "departments", localField: "department", foreignField: "_id", as: "department" } },
-    { $unwind: "$department" },
-    {
-      $project: {
-        _id: 0,
-        userId: "$_id",
-        roles: 1,
-        firstName: 1,
-        lastName: 1,
-        email: 1,
-        department: 1,
-        isVerified: 1,
-        status: 1,
-        profilePic: 1,
-        createdBy: 1,
-        modifiedBy: 1,
-        lastLogin: 1,
-        modifiedDate: 1,
-        insertDate: 1,
-        creationDate: 1,
-      },
-    },
+  let details = _.pick(user, [
+    "userId",
+    "firstName",
+    "lastName",
+    "phone",
+    "email",
+    "department",
+    "status",
+    "profilePic",
+    "lastLogin",
   ]);
 
-  return response.withData(res, {token: token, refreshToken: refreshToken, details: details,  });
+  // let details = await User.aggregate([
+  //   { $match: criteria },
+  //   { $lookup: { from: "roles", localField: "roles", foreignField: "_id", as: "roles" } },
+  //   { $lookup: { from: "departments", localField: "department", foreignField: "_id", as: "department" } },
+  //   { $unwind: "$department" },
+  //   {
+  //     $project: {
+  //       _id: 0,
+  //       userId: "$_id",
+  //       roles: 1,
+  //       firstName: 1,
+  //       lastName: 1,
+  //       email: 1,
+  //       department: 1,
+  //       isVerified: 1,
+  //       status: 1,
+  //       profilePic: 1,
+  //       createdBy: 1,
+  //       modifiedBy: 1,
+  //       lastLogin: 1,
+  //       modifiedDate: 1,
+  //       insertDate: 1,
+  //       creationDate: 1,
+  //     },
+  //   },
+  // ]);
+
+  return response.withData(res, {token: token, refreshToken: refreshToken, details: details, role: rolesArray });
 });
 
 // user password change
