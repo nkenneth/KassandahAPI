@@ -916,7 +916,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
       return response.error(res, TICKET_CONSTANTS.TICKET_ALREADY_TREATED);
 
     currentPhase = await Phase.findById(ticket.phase);
-    if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+    if(!currentPhase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
 
     if (!req.jwtData.userId == currentPhase.approver) return response.error(res, AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
@@ -946,7 +946,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
       await ticket.save();
 
       //send reject mail to requester
-      user = await User.findById(ticket.user);
+      const user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
       const payload = {
@@ -970,7 +970,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     await ticket.save();
 
     //send rejected mail to requester
-    user = await User.findById(ticket.user);
+    const user = await User.findById(ticket.user);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
     const payload = {
