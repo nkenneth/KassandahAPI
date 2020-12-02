@@ -802,7 +802,6 @@ router.get("/approver/ticket-pending", userAuth, async (req, res) => {
 router.patch("/approve/:id", userAuth, async (req, res) => {
   const { id } = req.params;
 
-  console.log(req.jwtData.role)
   if (!req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
@@ -810,24 +809,35 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     // get ticket and forward or mark as approved
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
+
     if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
       return response.error(res, TICKET_CONSTANTS.TICKET_ALREADY_TREATED);
-    console.log(ticket);
+
+    currentPhase = await Phase.findById(ticket.phase);
+    if(!currentPhase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+
+    if (!req.jwtData.userId == currentPhase.approver) return response.error(res, AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
     workflow = await Workflow.findById(ticket.workflow);
     if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
     let phaseCount = workflow.phases.length
-    console.log("COUNT: " + phaseCount)
+    console.log("PHASE COUNT: " + phaseCount)
 
-    let currentPhase = workflow.phases.indexOf(ticket.phase) + 1;
-    if(currentPhase == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
+    let currentPhaseIndex = workflow.phases.indexOf(ticket.phase) + 1;
+    if(currentPhaseIndex == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
-    console.log("PHASE IS " + currentPhase);
-    console.log(workflow.phases[1]);
+    console.log("PHASE POSITION IS " + currentPhaseIndex);
 
     // process last phase
-    if(currentPhase == phaseCount) {
+    if(currentPhaseIndex == phaseCount) {
+      // save comments if exists
+      if (req.body.comment && req.body.comment !== "") {
+        const comment = new Comment({ comment: req.body.comment, user: req.jwtData.userId, ticket: ticket._id })
+        await comment.save();
+      }
+
       ticket.phaseStatus = "approved";
       ticket.status = "approved";
       await ticket.save();
@@ -835,36 +845,52 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
       const user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+      const approver = await User.findById(req.jwtData.userId);
+      if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
       // send approved mail to requester
-      const payload = {
+      const mailApproverPayload = {
         email: approver.email,
         firstName: approver.firstName,
-        mailOptions: { mailType: "sendApprovalMail" }
+        mailOptions: { mailType: "sendApproverApprovalMail" }
       }
-      await publishToQueue(payload);
+      await publishToQueue(mailApproverPayload);
+
+      const mailUserPayload = {
+        email: user.email,
+        firstName: user.firstName,
+        mailOptions: { mailType: "sendRequesterApprovalMail" }
+      }
+      await publishToQueue(mailUserPayload);
 
       return response.withData(res, ticket);
     }
 
-    const phase = await Phase.findById(workflow.phases[currentPhase]);
-    if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+    // save comments if exists
+    if (req.body.comment && req.body.comment !== "") {
+      const comment = new Comment({ comment: req.body.comment, user: req.jwtData.userId, ticket: ticket._id })
+      await comment.save();
+    }
 
-    ticket.phase = workflow.phases[currentPhase];
+    // const nextPhase = await Phase.findById(workflow.phases[currentPhase]);
+    // if(!nextPhase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+
+    ticket.phase = workflow.phases[currentPhaseIndex];
     await ticket.save();
 
     // send mail to next phase approver
     const nextPhase = await Phase.findById(ticket.phase);
     if (!nextPhase) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
 
-    const user = await User.findById(nextPhase.approver);
-    if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
+    const nextApprover = await User.findById(nextPhase.approver);
+    if (!nextApprover) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
-    const payload = {
-      email: user.email,
-      firstName: user.firstName,
-      mailOptions: { mailType: "sendApprovalMail" }
+    const mailNextApproverPayload = {
+      email: nextApprover.email,
+      firstName: nextApprover.firstName,
+      mailOptions: { mailType: "sendNextApproverApprovalMail" }
     }
-    await publishToQueue(payload);
+    await publishToQueue(mailNextApproverPayload);
 
     return response.success(res);
 
@@ -878,18 +904,21 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
 router.patch("/reject/:id", userAuth, async (req, res) => {
   const { id } = req.params;
 
-  console.log(req.jwtData.role)
   if (!req.jwtData.role.includes(config.get("approver-role")))
     return response.error(res, MIDDLEWARE_AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
   try {
-
     // get ticket and mark as rejected
     ticket = await Ticket.findById(id);
     if(!ticket) return response.error(res, TICKET_CONSTANTS.TICKET_NOT_FOUND);
+
     if(ticket.phaseStatus == "rejected" || ticket.phaseStatus == "approved")
       return response.error(res, TICKET_CONSTANTS.TICKET_ALREADY_TREATED);
-    console.log(ticket);
+
+    currentPhase = await Phase.findById(ticket.phase);
+    if(!phase) return response.error(res, TICKET_CONSTANTS.TICKET_PHASE_ERROR);
+
+    if (!req.jwtData.userId == currentPhase.approver) return response.error(res, AUTH_CONSTANTS.RESOURCE_FORBIDDEN);
 
     workflow = await Workflow.findById(ticket.workflow);
     if(!workflow) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
@@ -897,38 +926,50 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     let phaseCount = workflow.phases.length
     console.log("COUNT: " + phaseCount)
 
-    let currentPhase = workflow.phases.indexOf(ticket.phase) + 1;
-    if(currentPhase == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
+    let currentPhaseIndex = workflow.phases.indexOf(ticket.phase) + 1;
+    if(currentPhaseIndex == -1) return response.error(res, TICKET_CONSTANTS.TICKET_WORKFLOW_ERROR);
 
-    console.log("PHASE IS " + currentPhase);
+    console.log("PHASE IS " + currentPhaseIndex);
     console.log(workflow.phases[1]);
 
     // process last phase
-    if(currentPhase == phaseCount) {
+    if(currentPhaseIndex == phaseCount) {
+
+      //save comments if exists
+      if (req.body.comment && req.body.comment !== "") {
+        const comment = new Comment({ comment: req.body.comment, user: req.jwtData.userId, ticket: ticket._id })
+        await comment.save();
+      }
+
       ticket.phaseStatus = "rejected";
       ticket.status = "rejected";
       await ticket.save();
 
-      // send reject mail to requester
+      //send reject mail to requester
       user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
       const payload = {
       email: user.email,
       firstName: user.firstName,
-      mailOptions: { mailType: "sendRejectMail" }
+      mailOptions: { mailType: "sendRequesterRejectMail" }
       }
       await publishToQueue(payload);
 
       return response.withData(res, ticket);
     }
 
+    //save comments if exists
+    if (req.body.comment && req.body.comment !== "") {
+      const comment = new Comment({ comment: req.body.comment, user: req.jwtData.userId, ticket: ticket._id })
+      await comment.save();
+    }
+
     ticket.phaseStatus = "rejected";
     ticket.status = "rejected";
     await ticket.save();
 
-    // send rejected mail to requester
-
+    //send rejected mail to requester
     user = await User.findById(ticket.user);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
