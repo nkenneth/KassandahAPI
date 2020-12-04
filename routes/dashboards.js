@@ -125,10 +125,27 @@ router.get("/approver/ticket-count", userAuth, async (req, res) => {
         let ticketCount = 0;
 
         for (const approverPhase of approverPhases) {
-            let workflows = await Workflow.find({ phases: approverPhase._id });
+            let approverPhaseId = approverPhase._id;
+            let workflows = await Workflow.find({ phases: approverPhaseId });
             let tickets = await Ticket.find({ workflow: { $in: workflows }});
-            ticketCount += tickets.length;
+
+            for (const ticket of tickets) {
+                workflow = await Workflow.findById(ticket.workflow);
+                if(workflow) {
+                let phaseCount = workflow.phases.length
+                console.log("COUNT phaseCount: " + phaseCount);
+                let currentPhaseIndex = workflow.phases.indexOf(ticket.phase);
+                console.log("COUNT currentPhaseIndex: " + currentPhaseIndex);
+                let approverPhaseIndex = workflow.phases.indexOf(approverPhaseId);
+                console.log("COUNT approverPhaseIndex: " + approverPhaseIndex);
+
+                    if( currentPhaseIndex >= approverPhaseIndex ) {
+                        ticketCount++;
+                    }
+                }
+            }
         }
+
 
         return response.withData(res, { allApproverTicketsCount: ticketCount });
 
