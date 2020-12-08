@@ -22,10 +22,10 @@ const ses = new aws.SES();
 
 
 
-async function sendResetPasswordMail(email, username, token) {
+async function sendResetPasswordMail(email, username, callback) {
   let data = {
     name: username,
-    token: token,
+    callback: callback
   };
   const temp = formatter(resetYourPasswordHtml, data);
   const msg = {
@@ -58,10 +58,10 @@ async function sendResetPasswordMail(email, username, token) {
   }
 }
 
-async function sendUserVerificationMail(email, firstName, token) {
+async function sendUserVerificationMail(email, firstName, callback) {
   let data = {
     name: firstName,
-    token: token,
+    callback: callback
   };
   const temp = formatter(verifyEmailHtml, data);
   const msg = {
