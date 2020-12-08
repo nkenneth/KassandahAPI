@@ -268,20 +268,20 @@ router.put("/", userAuth, async (req, res) => {
 router.get("/verify/:token", async (req, res) => {
 
   const { token } = req.params;
-  if(!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+  if(!token) return response.redirect(res, url=null, USER_CONSTANTS.VERIFICATION_FAILURE);
   // if(!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
   console.log("token isssss:::::" + token);
 
   // Find a matching token
   Token.findOne({ token }, function (err, token) {
-    if (!token) return response.redirect(res, USER_CONSTANTS.VERIFICATION_FAILURE);
+    if (!token) return response.redirect(res, url=null, USER_CONSTANTS.VERIFICATION_FAILURE);
     // if (!token) return response.error(res, USER_CONSTANTS.VERIFICATION_FAILURE);
 
     // If we found a token, find a matching user
     User.findOne({ _id: token._userId }, function (err, user) {
-        if (!user) return response.redirect(res, USER_CONSTANTS.INVALID_USER);
+        if (!user) return response.redirect(res, url=null, USER_CONSTANTS.INVALID_USER);
         // if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
-        if (user.isVerified) return response.redirect(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
+        if (user.isVerified) return response.redirect(res, url=null, USER_CONSTANTS.USER_ALREADY_VERIFIED);
         // if (user.isVerified) return response.error(res, USER_CONSTANTS.USER_ALREADY_VERIFIED);
 
         // Verify and save the user
@@ -289,7 +289,7 @@ router.get("/verify/:token", async (req, res) => {
         user.status = "active";
         user.save(function (err) {
             if (err) return response.error(res, err.message);
-            return response.redirect(res);
+            return response.redirect(res, url=null, USER_CONSTANTS.VERIFICATION_SUCCESS);
         });
     });
   });

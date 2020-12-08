@@ -42,7 +42,7 @@ function error(res, msg = 'Error Occured', code = 400) {
 
 
 function redirect(res, url = config.get("front_app_domain"), msg = "") {
-    return res.redirect(301, `${url}/?msg=${msg}`);
+    return res.redirect(301, `${url}/?message=${msg}`);
 }
 
 
