@@ -197,7 +197,7 @@ router.post("/", async (req, res) => {
 
     let baseurl = config.get("app_domain");
     console.log(`host url is: ${baseurl}`);
-    callback_url = `${baseurl}api/user/verify/${token.token}`;
+    callback_url = `${baseurl}/api/user/verify/${token.token}`;
 
     // sendUserVerificationMail(user.email, user.firstName, callback_url);
     const payload = {
@@ -318,7 +318,7 @@ router.post("/resend", async (req, res) => {
   });
   var host = config.get("app_domain");
   console.log(`host url is: ${host}`);
-  callback_url = `${host}api/user/verify/${token.token}`;
+  callback_url = `${host}/api/user/verify/${token.token}`;
   await sendUserVerificationMail(user.email, user.firstName, callback_url);
 
   return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
@@ -455,7 +455,7 @@ router.post("/password/forgot", async (req, res) => {
     if (err) return response.error(res, err.message, 500);
   });
 
-  await sendResetPasswordMail(user.email, user.firstName, `http://${req.headers.host}/api/user/password/forgot/${resetToken}`);
+  await sendResetPasswordMail(user.email, user.firstName, `https://${req.headers.host}/api/user/password/forgot/${resetToken}`);
 
   return response.success(res, USER_CONSTANTS.RESET_PASSWORD_EMAIL_SENT);
 
