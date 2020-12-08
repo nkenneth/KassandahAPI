@@ -289,7 +289,7 @@ router.get("/verify/:token", async (req, res) => {
         user.status = "active";
         user.save(function (err) {
             if (err) return response.error(res, err.message);
-            return response.redirect(res, USER_CONSTANTS.VERIFICATION_SUCCESS);
+            return response.redirect(res, undefined, USER_CONSTANTS.VERIFICATION_SUCCESS);
         });
     });
   });
