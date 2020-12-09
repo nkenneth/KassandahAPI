@@ -1,28 +1,65 @@
-const nodemailer = require('nodemailer'); 
-
-let mailTransporter = nodemailer.createTransport({ 
-  service: 'gmail', 
-  auth: { 
-      user: 'anselmleo@gmail.com', 
-      pass: 'La4God&4youthog'
-  } 
-}); 
-
-
-let mailDetails = { 
-  from: 'anselmleo@gmail.com', 
-  to: 'anselm.mba@gmail.com', 
-  subject: 'Test mail', 
-  text: 'Testing my GiG app!'
-}; 
+const config = require('config');
+const nodemailer = require('nodemailer');
+const winston = require('winston');
+const { formatter } = require("./commonFunctions");
+const {
+  verifyEmailHtml,
+  resetYourPasswordHtml,
+  approvalEmail,
+  rejectionEmail,
+} = require("../services/htmlTemplateFile");
 
 
-mailTransporter.sendMail(mailDetails, function(err, data) { 
-  if(err) { 
-      console.log('Error Occurs'); 
-  } else { 
+let mailTransporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: config.get("nodemailer.senderId"),
+    pass: config.get("nodemailer.secretKey")
+  }
+});
 
-      console.log('Email sent successfully'); 
-      return response.withData(res, data);
-  } 
-}); 
+
+
+// let mailTransporter = nodemailer.createTransport({
+//   host: "smtp.mailtrap.io",
+//   port: 587,
+//   secure: false, // use TLS
+//   auth: {
+//     user: config.get("nodemailer.senderId"),
+//     pass: config.get("nodemailer.secretKey")
+//   }
+// });
+
+
+
+async function sendUserVerificationMail (email, firstName, callback) {
+
+  let data = {
+    name: firstName,
+    callback: callback
+  };
+
+  const temp = formatter(verifyEmailHtml, data);
+
+  const mailDetails = {
+    from: config.get("nodemailer.senderId"),
+    to: email,
+    subject: config.get("email.verifyEmailSubject"),
+    html: temp
+  }
+
+
+  try {
+    result = await mailTransporter.sendMail(mailDetails);
+    winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
+    return { MessageId: result.MessageId };
+  } catch (error) {
+    console.log(`Sending of Email failed. Error is: ${error}`);
+    winston.error(`Sending of Email failed. Error is: ${error}`);
+    return { code: error.code, message: error.message };
+  }
+}
+
+
+
+module.exports.sendUserVerificationMail = sendUserVerificationMail;

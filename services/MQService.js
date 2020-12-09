@@ -1,7 +1,8 @@
 
 const config = require('config');
 const CONN_URL = config.get('MQ_CONN_URL');
-const EmailService = require('./amazonSes');
+const AmazonEmailService = require('./amazonSes');
+const NodeEmailService = require('./nodemailer');
 const open = require('amqplib').connect(CONN_URL);
 const queue = 'sendEmails';
 
@@ -26,7 +27,11 @@ const consumeFromQueue = () => {
           switch (mailOptions.mailType) {
             case "sendUserVerificationMail":
               // send verification mail via aws ses
-              EmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url)
+              // AmazonEmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url)
+              // .then(() => {
+              //   channel.ack(message);
+              // });
+              NodeEmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url)
               .then(() => {
                 channel.ack(message);
               });
@@ -34,13 +39,13 @@ const consumeFromQueue = () => {
 
             case "sendApprovalMail":
               // send approval mail via aws ses
-              EmailService.sendApprovalMail(email, firstName).then(() => {
+              AmazonEmailService.sendApprovalMail(email, firstName).then(() => {
                 channel.ack(message);
               });
 
             case "sendRejectMail":
               // send rejection mail via aws ses
-              EmailService.sendRejectMail(email, firstName).then(() => {
+              AmazonEmailService.sendRejectMail(email, firstName).then(() => {
                 channel.ack(message);
               });
 

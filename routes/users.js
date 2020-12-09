@@ -23,6 +23,7 @@ const {
 const { Role } = require("../models/role");
 const { Token } = require("../models/emailverificationtoken.js");
 const { sendUserVerificationMail, sendResetPasswordMail } = require("../services/amazonSes");
+const NodeEmailService = require("../services/nodemailer");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
 const { publishToQueue } = require("../services/MQService");
@@ -198,6 +199,9 @@ router.post("/", async (req, res) => {
     let baseurl = config.get("app_domain");
     console.log(`host url is: ${baseurl}`);
     callback_url = `${baseurl}/api/user/verify/${token.token}`;
+
+    //test email with nodemailer
+    // NodeEmailService.sendUserVerificationMail(user.email, user.firstName, callback_url);
 
     // sendUserVerificationMail(user.email, user.firstName, callback_url);
     const payload = {

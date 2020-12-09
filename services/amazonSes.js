@@ -78,7 +78,7 @@ async function sendUserVerificationMail(email, firstName, callback) {
       },
       Subject: {
         Charset: "UTF-8",
-        Data: "email.verifyEmailSubject",
+        Data: config.get("email.verifyEmailSubject"),
       },
     },
     Source: config.get("ses.senderId"),
