@@ -20,6 +20,10 @@
   "ses": {
     "senderId": "anselm.mba@thegiggroupng.com"
   },
+  "nodemailer": {
+    "senderId": "lizzypoche@gmail.com",
+    "secretKey": "Ll4God&4youtheg"
+  },
   "email": {
     "verifyEmailSubject": "Verify Your Email",
     "phaseApprovalSubject": "Approve Requisition",
