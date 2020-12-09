@@ -68,6 +68,9 @@ storage/
 #mybackups
 .backupDefault.json
 
+#my config files
+config/
+
 
 #certificates
 *.pem

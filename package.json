@@ -23,7 +23,6 @@
     "async": "^2.2.0",
     "aws-sdk": "^2.437.0",
     "axios": "^0.19.2",
-    "bcrypt": "^3.0.6",
     "bcryptjs": "^2.4.3",
     "boom": "6.0.0",
     "catbox-memory": "^4.0.1",
