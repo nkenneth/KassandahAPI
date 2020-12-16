@@ -39,7 +39,6 @@ router.post("/subscribe", async (req, res) => {
                 // });
             }
         });
-
     }
 
     const payload = JSON.stringify({ title: "Notifications enabled already"});

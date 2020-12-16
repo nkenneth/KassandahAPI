@@ -230,10 +230,14 @@ router.post("/", userAuth, upload, async (req, res) => {
     const approver = await User.findById(phaseModel.approver);
     if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+    console.log("DUE DATE: ", ticket.dueDate);
+    let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
+    console.log("split DUE DATE: ", ticketDueDate);
+
     const payload = {
       email: approver.email,
       firstName: approver.firstName,
-      ticket: { description: ticket.description, items: ticket.items, dueDate: ticket.dueDate },
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendApprovalMail" }
     }
     await publishToQueue(payload);

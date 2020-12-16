@@ -44,6 +44,7 @@ const consumeFromQueue = () => {
               //   channel.ack(message);
               // });
               console.log(`sending ${mailOptions.mailType}`);
+              console.log("ticket", ticket)
               NodeEmailService.sendApprovalMail(email, firstName, ticket)
               .then(() => {
                 channel.ack(message);
