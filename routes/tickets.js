@@ -233,6 +233,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     const payload = {
       email: approver.email,
       firstName: approver.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticket.dueDate },
       mailOptions: { mailType: "sendApprovalMail" }
     }
     await publishToQueue(payload);

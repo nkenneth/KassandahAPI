@@ -62,10 +62,13 @@ async function sendUserVerificationMail (email, firstName, callback) {
 }
 
 
-async function sendApprovalMail (email, firstName) {
+async function sendApprovalMail (email, firstName, ticket) {
 
   let data = {
-    name: firstName
+    name: firstName,
+    ticketDescription: ticket.description,
+    ticketItems: ticket.items,
+    dueDate: ticket.dueDate
   };
 
   const temp = formatter(approvalEmailHtml, data);

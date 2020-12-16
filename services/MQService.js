@@ -22,7 +22,7 @@ const consumeFromQueue = () => {
       return channel.consume(queue, (message) => {
         console.log('i got to consume')
         if (message !== null) {
-          const { email, firstName, mailOptions } = JSON.parse(message.content.toString());
+          const { email, firstName, mailOptions, ticket } = JSON.parse(message.content.toString());
           console.log(' [x] Received %s', email);
           switch (mailOptions.mailType) {
             case "sendUserVerificationMail":
@@ -44,7 +44,7 @@ const consumeFromQueue = () => {
               //   channel.ack(message);
               // });
               console.log(`sending ${mailOptions.mailType}`);
-              NodeEmailService.sendApprovalMail(email, firstName)
+              NodeEmailService.sendApprovalMail(email, firstName, ticket)
               .then(() => {
                 channel.ack(message);
               });
