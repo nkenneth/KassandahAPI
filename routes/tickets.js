@@ -848,20 +848,21 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
       const approver = await User.findById(req.jwtData.userId);
       if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
-      // send approved mail to requester
+      // send approved mail to approver
       const mailApproverPayload = {
         email: approver.email,
         firstName: approver.firstName,
-        mailOptions: { mailType: "sendApproverApprovalMail" }
+        mailOptions: { mailType: "sendApproverTicketApprovedMail" }
       }
       await publishToQueue(mailApproverPayload);
 
-      const mailUserPayload = {
+      // send approved mail to requester
+      const mailRequesterPayload = {
         email: user.email,
         firstName: user.firstName,
-        mailOptions: { mailType: "sendRequesterApprovalMail" }
+        mailOptions: { mailType: "sendRequesterTicketApprovedMail" }
       }
-      await publishToQueue(mailUserPayload);
+      await publishToQueue(mailRequesterPayload);
 
       return response.withData(res, ticket);
     }
@@ -878,6 +879,30 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     ticket.phase = workflow.phases[currentPhaseIndex];
     await ticket.save();
 
+
+    // get requester and approver
+    const requester = await User.findById(ticket.user);
+    if (!requester) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+    const approver = await User.findById(req.jwtData.userId);
+    if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
+
+    // send approved mail to approver
+    const mailApproverPayload = {
+      email: approver.email,
+      firstName: approver.firstName,
+      mailOptions: { mailType: "sendApproverTicketApprovedMail" }
+    }
+    await publishToQueue(mailApproverPayload);
+
+    // send approved mail to requester
+    const mailRequesterPayload = {
+      email: requester.email,
+      firstName: requester.firstName,
+      mailOptions: { mailType: "sendRequesterTicketApprovedMail" }
+    }
+    await publishToQueue(mailRequesterPayload);
+
     // send mail to next phase approver
     const nextPhase = await Phase.findById(ticket.phase);
     if (!nextPhase) return response.error(res, PHASE_CONSTANTS.PHASE_NOT_FOUND);
@@ -888,7 +913,7 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     const mailNextApproverPayload = {
       email: nextApprover.email,
       firstName: nextApprover.firstName,
-      mailOptions: { mailType: "sendNextApproverApprovalMail" }
+      mailOptions: { mailType: "sendApprovalMail" }
     }
     await publishToQueue(mailNextApproverPayload);
 
@@ -956,7 +981,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
       }
       await publishToQueue(payload);
 
-      return response.withData(res, ticket);
+      return response.success(res);
     }
 
     //save comments if exists
@@ -976,7 +1001,7 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     const payload = {
       email: user.email,
       firstName: user.firstName,
-      mailOptions: { mailType: "sendRejectMail" }
+      mailOptions: { mailType: "sendRequesterRejectMail" }
     }
     await publishToQueue(payload);
 

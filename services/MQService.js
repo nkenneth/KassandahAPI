@@ -26,11 +26,12 @@ const consumeFromQueue = () => {
           console.log(' [x] Received %s', email);
           switch (mailOptions.mailType) {
             case "sendUserVerificationMail":
-              // send verification mail via aws ses
+              // // send verification mail via aws ses
               // AmazonEmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url)
               // .then(() => {
               //   channel.ack(message);
               // });
+              console.log(`sending ${mailOptions.mailType}`);
               NodeEmailService.sendUserVerificationMail(email, firstName, mailOptions.callback_url)
               .then(() => {
                 channel.ack(message);
@@ -38,16 +39,40 @@ const consumeFromQueue = () => {
               break;
 
             case "sendApprovalMail":
-              // send approval mail via aws ses
-              AmazonEmailService.sendApprovalMail(email, firstName).then(() => {
+              // // send approval mail via aws ses
+              // AmazonEmailService.sendApprovalMail(email, firstName).then(() => {
+              //   channel.ack(message);
+              // });
+              console.log(`sending ${mailOptions.mailType}`);
+              NodeEmailService.sendApprovalMail(email, firstName)
+              .then(() => {
                 channel.ack(message);
               });
+              break;
 
-            case "sendRejectMail":
-              // send rejection mail via aws ses
-              AmazonEmailService.sendRejectMail(email, firstName).then(() => {
+            case "sendApproverTicketRejectedMail":
+              // // send rejection mail via aws ses
+              // AmazonEmailService.sendRejectMail(email, firstName).then(() => {
+              //   channel.ack(message);
+              // });
+              console.log(`sending ${mailOptions.mailType}`);
+              NodeEmailService.sendApproverTicketRejectedMail(email, firstName)
+              .then(() => {
                 channel.ack(message);
               });
+              break;
+
+            case "sendApproverTicketApprovedMail":
+              // // send rejection mail via aws ses
+              // AmazonEmailService.sendRejectMail(email, firstName).then(() => {
+              //   channel.ack(message);
+              // });
+              console.log(`sending ${mailOptions.mailType}`);
+              NodeEmailService.sendApproverTicketApprovedMail(email, firstName)
+              .then(() => {
+                channel.ack(message);
+              });
+              break;
 
             default:
               break;

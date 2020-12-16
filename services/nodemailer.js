@@ -5,8 +5,9 @@ const { formatter } = require("./commonFunctions");
 const {
   verifyEmailHtml,
   resetYourPasswordHtml,
-  approvalEmail,
-  rejectionEmail,
+  approvalEmailHtml,
+  approverRejectedEmailHtml,
+  approverApprovedEmailHtml,
 } = require("../services/htmlTemplateFile");
 
 
@@ -61,5 +62,97 @@ async function sendUserVerificationMail (email, firstName, callback) {
 }
 
 
+async function sendApprovalMail (email, firstName) {
+
+  let data = {
+    name: firstName
+  };
+
+  const temp = formatter(approvalEmailHtml, data);
+
+  const mailDetails = {
+    from: config.get("nodemailer.senderId"),
+    to: email,
+    subject: config.get("email.approvalEmailSubject"),
+    html: temp
+  }
+
+
+  try {
+    result = await mailTransporter.sendMail(mailDetails);
+    winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
+    return { MessageId: result.MessageId };
+  } catch (error) {
+    console.log(`Sending of Email failed. Error is: ${error}`);
+    winston.error(`Sending of Email failed. Error is: ${error}`);
+    return { code: error.code, message: error.message };
+  }
+}
+
+
+
+
+async function sendApproverTicketRejectedMail (email, firstName) {
+
+  let data = {
+    name: firstName
+  };
+
+  const temp = formatter(approverRejectedEmailHtml, data);
+
+  const mailDetails = {
+    from: config.get("nodemailer.senderId"),
+    to: email,
+    subject: config.get("email.rejectedEmailSubject"),
+    html: temp
+  }
+
+
+  try {
+    result = await mailTransporter.sendMail(mailDetails);
+    winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
+    return { MessageId: result.MessageId };
+  } catch (error) {
+    console.log(`Sending of Email failed. Error is: ${error}`);
+    winston.error(`Sending of Email failed. Error is: ${error}`);
+    return { code: error.code, message: error.message };
+  }
+}
+
+
+async function sendApproverTicketApprovedMail (email, firstName) {
+
+  let data = {
+    name: firstName
+  };
+
+  const temp = formatter(approverApprovedEmailHtml, data);
+
+  const mailDetails = {
+    from: config.get("nodemailer.senderId"),
+    to: email,
+    subject: config.get("email.approvedEmailSubject"),
+    html: temp
+  }
+
+
+  try {
+    result = await mailTransporter.sendMail(mailDetails);
+    winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
+    return { MessageId: result.MessageId };
+  } catch (error) {
+    console.log(`Sending of Email failed. Error is: ${error}`);
+    winston.error(`Sending of Email failed. Error is: ${error}`);
+    return { code: error.code, message: error.message };
+  }
+}
+
+
+
+
 
 module.exports.sendUserVerificationMail = sendUserVerificationMail;
+module.exports.sendApprovalMail = sendApprovalMail;
+module.exports.sendApproverTicketRejectedMail = sendApproverTicketRejectedMail;
+module.exports.sendApproverTicketApprovedMail = sendApproverTicketApprovedMail;
+

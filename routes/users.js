@@ -27,6 +27,8 @@ const NodeEmailService = require("../services/nodemailer");
 const { formatter } = require("../services/commonFunctions");
 const { userAuth } = require("../middleware/auth");
 const { publishToQueue } = require("../services/MQService");
+// const webpush = require("web-push");
+
 
 mongoose.set("debug", true);
 
@@ -200,7 +202,7 @@ router.post("/", async (req, res) => {
     console.log(`host url is: ${baseurl}`);
     callback_url = `${baseurl}/api/user/verify/${token.token}`;
 
-    //test email with nodemailer
+    // Test email with nodemailer
     // NodeEmailService.sendUserVerificationMail(user.email, user.firstName, callback_url);
 
     // sendUserVerificationMail(user.email, user.firstName, callback_url);
@@ -210,8 +212,6 @@ router.post("/", async (req, res) => {
       mailOptions: { mailType: "sendUserVerificationMail", callback_url: callback_url }
     }
     await publishToQueue(payload);
-
-
 
     return response.success(res, USER_CONSTANTS.VERIFICATION_EMAIL_SENT);
 
@@ -227,6 +227,7 @@ router.put("/", userAuth, async (req, res) => {
   if (error) return res.status(400).send({ statusCode: 400, message: "Failure", data: error.details[0].message });
 
   let user;
+
   if (req.jwtData.role === "user") {
     user = await User.findById(req.body.userId);
     if (!user) return res.status(400).send({ statusCode: 400, message: "Failure", data: USER_CONSTANTS.INVALID_USER });
@@ -411,6 +412,12 @@ router.post("/login", async (req, res) => {
   //     },
   //   },
   // ]);
+
+  // const pushPayload = JSON.stringify({ title: "User logged in!" });
+
+  // // pass object into send notification
+  // webpush.sendNotification(pushSubscriberExists, pushPayload).catch(error => console.error(error));
+  // response.success(res, "Subscription saved");
 
   return response.withData(res, {token: token, refreshToken: refreshToken, details: details, roles: rolesArray });
 });

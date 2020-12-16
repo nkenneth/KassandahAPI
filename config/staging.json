@@ -24,15 +24,18 @@
     "senderId": "lizzypoche@gmail.com",
     "secretKey": "Ll4God&4youtheg"
   },
+  "pushNotification": {
+    "publicVapidKey": "BL_h_8yZoxNUlBRWTw7rWHMiUEtwYR8knfP6FxIOBqvUV_q9isaXg8uC7he6yowFq93zZSEJXUSq24kvfUuNX7c",
+    "privateVapidKey": "ZWVGOLgLKKKZH_kCDGz42vn6gPRJ2qnjYb6CyzdFelY"
+  },
   "email": {
     "verifyEmailSubject": "Verify Your Email",
-    "phaseApprovalSubject": "Approve Requisition",
-    "resetPasswordSubject": "Reset Your Password",
-    "phaseRejectionSubject": "Requisition Rejected"
+    "approvalEmailSubject": "Approve Requisition",
+    "approvedEmailSubject": "Requisition Approved",
+    "rejectedEmailSubject": "Requisition Rejected",
+    "resetPasswordSubject": "Reset Your Password"
   },
   "approver-role": "approver"
-
-
 }
 
 
