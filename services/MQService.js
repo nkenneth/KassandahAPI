@@ -57,7 +57,7 @@ const consumeFromQueue = () => {
               //   channel.ack(message);
               // });
               console.log(`sending ${mailOptions.mailType}`);
-              NodeEmailService.sendApproverTicketRejectedMail(email, firstName)
+              NodeEmailService.sendApproverTicketRejectedMail(email, firstName, ticket)
               .then(() => {
                 channel.ack(message);
               });
@@ -69,7 +69,7 @@ const consumeFromQueue = () => {
               //   channel.ack(message);
               // });
               console.log(`sending ${mailOptions.mailType}`);
-              NodeEmailService.sendApproverTicketApprovedMail(email, firstName)
+              NodeEmailService.sendApproverTicketApprovedMail(email, firstName, ticket)
               .then(() => {
                 channel.ack(message);
               });

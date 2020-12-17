@@ -230,9 +230,7 @@ router.post("/", userAuth, upload, async (req, res) => {
     const approver = await User.findById(phaseModel.approver);
     if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
-    console.log("DUE DATE: ", ticket.dueDate);
     let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
-    console.log("split DUE DATE: ", ticketDueDate);
 
     const payload = {
       email: approver.email,
@@ -853,18 +851,25 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
       const approver = await User.findById(req.jwtData.userId);
       if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+      let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
+      console.log("ticket description", ticket.description);
+
       // send approved mail to approver
       const mailApproverPayload = {
         email: approver.email,
         firstName: approver.firstName,
+        ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
         mailOptions: { mailType: "sendApproverTicketApprovedMail" }
       }
+      console.log("mailApproverPayload",mailApproverPayload);
+      console.log("WE GOT HERE OOOOO",mailApproverPayload);
       await publishToQueue(mailApproverPayload);
 
       // send approved mail to requester
       const mailRequesterPayload = {
         email: user.email,
         firstName: user.firstName,
+        ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
         mailOptions: { mailType: "sendRequesterTicketApprovedMail" }
       }
       await publishToQueue(mailRequesterPayload);
@@ -892,10 +897,14 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     const approver = await User.findById(req.jwtData.userId);
     if (!approver) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+    let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
+    console.log("ticket description", ticket.description);
+
     // send approved mail to approver
     const mailApproverPayload = {
       email: approver.email,
       firstName: approver.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendApproverTicketApprovedMail" }
     }
     await publishToQueue(mailApproverPayload);
@@ -904,6 +913,7 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     const mailRequesterPayload = {
       email: requester.email,
       firstName: requester.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendRequesterTicketApprovedMail" }
     }
     await publishToQueue(mailRequesterPayload);
@@ -918,6 +928,7 @@ router.patch("/approve/:id", userAuth, async (req, res) => {
     const mailNextApproverPayload = {
       email: nextApprover.email,
       firstName: nextApprover.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendApprovalMail" }
     }
     await publishToQueue(mailNextApproverPayload);
@@ -979,10 +990,14 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
       const user = await User.findById(ticket.user);
       if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+      let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
+      console.log("ticket description", ticket.description);
+
       const payload = {
-      email: user.email,
-      firstName: user.firstName,
-      mailOptions: { mailType: "sendRequesterRejectMail" }
+        email: user.email,
+        firstName: user.firstName,
+        ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
+        mailOptions: { mailType: "sendRequesterRejectMail" }
       }
       await publishToQueue(payload);
 
@@ -1003,9 +1018,13 @@ router.patch("/reject/:id", userAuth, async (req, res) => {
     const user = await User.findById(ticket.user);
     if (!user) return response.error(res, USER_CONSTANTS.INVALID_USER);
 
+    let ticketDueDate = ticket.dueDate.toString().substring(0, 10);
+    console.log("ticket description", ticket.description);
+
     const payload = {
       email: user.email,
       firstName: user.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendRequesterRejectMail" }
     }
     await publishToQueue(payload);

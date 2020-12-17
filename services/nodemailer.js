@@ -95,10 +95,13 @@ async function sendApprovalMail (email, firstName, ticket) {
 
 
 
-async function sendApproverTicketRejectedMail (email, firstName) {
+async function sendApproverTicketRejectedMail (email, firstName, ticket) {
 
   let data = {
-    name: firstName
+    name: firstName,
+    ticketDescription: ticket.description,
+    ticketItems: ticket.items,
+    dueDate: ticket.dueDate
   };
 
   const temp = formatter(approverRejectedEmailHtml, data);
@@ -123,10 +126,13 @@ async function sendApproverTicketRejectedMail (email, firstName) {
 }
 
 
-async function sendApproverTicketApprovedMail (email, firstName) {
+async function sendApproverTicketApprovedMail (email, firstName, ticket) {
 
   let data = {
-    name: firstName
+    name: firstName,
+    ticketDescription: ticket.description,
+    ticketItems: ticket.items,
+    dueDate: ticket.dueDate
   };
 
   const temp = formatter(approverApprovedEmailHtml, data);
