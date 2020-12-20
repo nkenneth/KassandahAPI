@@ -28,6 +28,10 @@
     "service": "gmail",
     "senderId": "lizzypoche@gmail.com"
   },
+  "pushNotification": {
+    "publicVapidKey": "BL_h_8yZoxNUlBRWTw7rWHMiUEtwYR8knfP6FxIOBqvUV_q9isaXg8uC7he6yowFq93zZSEJXUSq24kvfUuNX7c",
+    "privateVapidKey": "ZWVGOLgLKKKZH_kCDGz42vn6gPRJ2qnjYb6CyzdFelY"
+  },
   "email": {
     "verifyEmailSubject": "Verify Your Email",
     "phaseApprovalSubject": "Approve Requisition",
