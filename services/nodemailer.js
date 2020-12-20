@@ -1,5 +1,6 @@
 const config = require('config');
 const nodemailer = require('nodemailer');
+const { google } = require('googleapis');
 const winston = require('winston');
 const { formatter } = require("./commonFunctions");
 const {
@@ -10,14 +11,44 @@ const {
   approverApprovedEmailHtml,
 } = require("../services/htmlTemplateFile");
 
+const service = config.get("nodemailer.service");
+const senderId = config.get("nodemailer.senderId");
+const clientID = config.get("nodemailer.clientID");
+const clientSecret = config.get("nodemailer.clientSecret");
+const redirectURI = config.get("nodemailer.redirectURI");
+const refreshToken = config.get("nodemailer.refreshToken");
+
+
+
+const oAuth2Client = new google.auth.OAuth2(clientID, clientSecret, redirectURI);
+oAuth2Client.setCredentials({ refresh_token: refreshToken });
+
+async function getAccessToken () {
+  let accessToken = await oAuth2Client.getAccessToken();
+  return accessToken;
+}
+
+let accessToken = getAccessToken();
 
 let mailTransporter = nodemailer.createTransport({
-  service: 'gmail',
+  service: service,
   auth: {
-    user: config.get("nodemailer.senderId"),
-    pass: config.get("nodemailer.secretKey")
+    type: 'OAuth2',
+    user: senderId,
+    clientId: clientID,
+    clientSecret: clientSecret,
+    refreshToken: refreshToken,
+    accessToken: accessToken
   }
 });
+
+// let mailTransporter = nodemailer.createTransport({
+//   service: 'gmail',
+//   auth: {
+//     user: config.get("nodemailer.senderId"),
+//     pass: config.get("nodemailer.secretKey")
+//   }
+// });
 
 
 
