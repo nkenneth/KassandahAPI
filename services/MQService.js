@@ -1,7 +1,7 @@
 
 const config = require('config');
 const CONN_URL = config.get('MQ_CONN_URL');
-const AmazonEmailService = require('./amazonSes');
+// const AmazonEmailService = require('./amazonSes');
 const NodeEmailService = require('./nodemailer');
 const open = require('amqplib').connect(CONN_URL);
 const queue = 'sendEmails';

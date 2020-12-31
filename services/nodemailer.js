@@ -1,3 +1,4 @@
+
 const config = require('config');
 const nodemailer = require('nodemailer');
 const { google } = require('googleapis');
@@ -10,9 +11,9 @@ const {
   approverRejectedEmailHtml,
   approverApprovedEmailHtml,
 } = require("../services/htmlTemplateFile");
-
-const service = config.get("nodemailer.service");
+const serviceType = config.get("nodemailer.service");
 const senderId = config.get("nodemailer.senderId");
+const user = config.get("nodemailer.user");
 const clientID = config.get("nodemailer.clientID");
 const clientSecret = config.get("nodemailer.clientSecret");
 const redirectURI = config.get("nodemailer.redirectURI");
@@ -23,24 +24,25 @@ const refreshToken = config.get("nodemailer.refreshToken");
 const oAuth2Client = new google.auth.OAuth2(clientID, clientSecret, redirectURI);
 oAuth2Client.setCredentials({ refresh_token: refreshToken });
 
-async function getAccessToken () {
-  let accessToken = await oAuth2Client.getAccessToken();
-  return accessToken;
-}
+// async function getAccessToken () {
+//   let accessToken = await oAuth2Client.getAccessToken();
+//   return accessToken;
+// }
 
-let accessToken = getAccessToken();
 
-let mailTransporter = nodemailer.createTransport({
-  service: service,
-  auth: {
-    type: 'OAuth2',
-    user: senderId,
-    clientId: clientID,
-    clientSecret: clientSecret,
-    refreshToken: refreshToken,
-    accessToken: accessToken
-  }
-});
+// let accessToken = getAccessToken();
+
+// let mailTransporter = nodemailer.createTransport({
+//   service: service,
+//   auth: {
+//     type: 'OAuth2',
+//     user: senderId,
+//     clientId: clientID,
+//     clientSecret: clientSecret,
+//     refreshToken: refreshToken,
+//     accessToken: accessToken
+//   }
+// });
 
 // let mailTransporter = nodemailer.createTransport({
 //   service: 'gmail',
@@ -82,6 +84,21 @@ async function sendUserVerificationMail (email, firstName, callback) {
 
 
   try {
+
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    let mailTransporter = nodemailer.createTransport({
+      service: serviceType,
+      auth: {
+        type: 'OAuth2',
+        user: user,
+        clientId: clientID,
+        clientSecret: clientSecret,
+        refreshToken: refreshToken,
+        accessToken: accessToken
+      }
+    });
+
     result = await mailTransporter.sendMail(mailDetails);
     winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
     return { MessageId: result.MessageId };

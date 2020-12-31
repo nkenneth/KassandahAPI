@@ -21,12 +21,12 @@
     "senderId": "anselm.mba@thegiggroupng.com"
   },
   "nodemailer": {
-    "clientID": "355911701929-u8dm1eutr4hijmgk2pepo3uui3ikta4o.apps.googleusercontent.com",
-    "clientSecret": "6b5FhKOHnlmNTIOOZaGMurVx",
-    "refreshToken": "1//04_0GOfjO9DDkCgYIARAAGAQSNwF-L9IrVATk5gNfgAiIoQwS8gmfVqfBdq6QZqA7OrqlFb4ewrhqm4P3TbrhBkgSUYAqCZpihBQ",
+    "clientID": "391115107901-0pi7adf140oi6mtd7qbgs2qecc65v3t3.apps.googleusercontent.com",
+    "clientSecret": "whvJ89vgMlksiAGcBD3woTLu",
+    "refreshToken": "1//04WHhvI22WitICgYIARAAGAQSNwF-L9IrxbpF8W-Hfzu5RHDY9qgSYID5XVNhdDUOTv-6RsUIe3PLiwAQWcOO-IiNMFL_OXZqCtU",
     "redirectURI": "https://developers.google.com/oauthplayground",
     "service": "gmail",
-    "senderId": "lizzypoche@gmail.com"
+    "senderId": "anselm.mba@gmail.com"
   },
   "pushNotification": {
     "publicVapidKey": "BL_h_8yZoxNUlBRWTw7rWHMiUEtwYR8knfP6FxIOBqvUV_q9isaXg8uC7he6yowFq93zZSEJXUSq24kvfUuNX7c",
