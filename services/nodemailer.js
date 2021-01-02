@@ -129,6 +129,21 @@ async function sendApprovalMail (email, firstName, ticket) {
 
 
   try {
+
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    let mailTransporter = nodemailer.createTransport({
+      service: serviceType,
+      auth: {
+        type: 'OAuth2',
+        user: user,
+        clientId: clientID,
+        clientSecret: clientSecret,
+        refreshToken: refreshToken,
+        accessToken: accessToken
+      }
+    });
+
     result = await mailTransporter.sendMail(mailDetails);
     winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
     return { MessageId: result.MessageId };
@@ -162,6 +177,21 @@ async function sendApproverTicketRejectedMail (email, firstName, ticket) {
 
 
   try {
+
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    let mailTransporter = nodemailer.createTransport({
+      service: serviceType,
+      auth: {
+        type: 'OAuth2',
+        user: user,
+        clientId: clientID,
+        clientSecret: clientSecret,
+        refreshToken: refreshToken,
+        accessToken: accessToken
+      }
+    });
+
     result = await mailTransporter.sendMail(mailDetails);
     winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
     return { MessageId: result.MessageId };
@@ -193,6 +223,21 @@ async function sendApproverTicketApprovedMail (email, firstName, ticket) {
 
 
   try {
+
+    const accessToken = await oAuth2Client.getAccessToken();
+
+    let mailTransporter = nodemailer.createTransport({
+      service: serviceType,
+      auth: {
+        type: 'OAuth2',
+        user: user,
+        clientId: clientID,
+        clientSecret: clientSecret,
+        refreshToken: refreshToken,
+        accessToken: accessToken
+      }
+    });
+
     result = await mailTransporter.sendMail(mailDetails);
     winston.info(`Sending of Email to ${email} success with status code: ${result.messageId}.`);
     return { MessageId: result.MessageId };
