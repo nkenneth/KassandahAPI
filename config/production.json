@@ -21,12 +21,13 @@
     "senderId": "anselm.mba@thegiggroupng.com"
   },
   "nodemailer": {
-    "clientID": "391115107901-0pi7adf140oi6mtd7qbgs2qecc65v3t3.apps.googleusercontent.com",
-    "clientSecret": "whvJ89vgMlksiAGcBD3woTLu",
-    "refreshToken": "1//04WHhvI22WitICgYIARAAGAQSNwF-L9IrxbpF8W-Hfzu5RHDY9qgSYID5XVNhdDUOTv-6RsUIe3PLiwAQWcOO-IiNMFL_OXZqCtU",
+    "clientID": "694790087502-qcegh23rtqrrvrambmhoep15nhr8ut02.apps.googleusercontent.com",
+    "clientSecret": "evIP9HrzpxtwoL6YnHjOzLk4",
+    "refreshToken": "1//04Uom4zFdyKP1CgYIARAAGAQSNwF-L9IrMfdegWLxnyEQzkJVkWg3k-3HN_q6exDfizY1jB4S6ztNxFeXD_56nw1YGnFWdrWt_wo",
     "redirectURI": "https://developers.google.com/oauthplayground",
     "service": "gmail",
-    "senderId": "anselm.mba@gmail.com"
+    "senderId": "kassandah.app@gmail.com",
+    "user": "kassandah.app@gmail.com"
   },
   "pushNotification": {
     "publicVapidKey": "BL_h_8yZoxNUlBRWTw7rWHMiUEtwYR8knfP6FxIOBqvUV_q9isaXg8uC7he6yowFq93zZSEJXUSq24kvfUuNX7c",
