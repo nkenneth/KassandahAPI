@@ -173,10 +173,9 @@ router.post("/", userAuth, upload, async (req, res) => {
     items, description, dueDate, amount, comment } = req.body;
 
   let vendorModel = await Vendor.find({name: vendorName});
-  if(commonFunctions.isEmpty(vendorModel)) return response.error(res, "vendor is empty")
-  // if(!vendorModel) return response.error(res, "Could not create or find vendor");
 
   vendorModel = await Vendor.create({ name: vendorName });
+  if(commonFunctions.isEmpty(vendorModel)) return response.error(res, "Could not create or find vendor");
 
   const vendor = vendorModel._id;
 

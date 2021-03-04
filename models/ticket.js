@@ -49,7 +49,7 @@ function validateTicketPost(ticket) {
         ref: Joi.string().min(2).max(200).required(),
         items: Joi.string().min(2).max(200).required(),
         numberOfItems: Joi.number().min(0).max(200).required(),
-        vendor: Joi.string().required(),
+        vendorName: Joi.string().required(),
         description: Joi.string().required(),
         category: Joi.string().required(),
         department: Joi.string().required(),

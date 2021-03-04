@@ -4,14 +4,14 @@ const Joi = require("joi");
 
 const VendorSchema = new mongoose.Schema({
     name: { type: String, required: true },
-    address: { type: String, required: true },
-    city: { type: String, required: true },
-    state: { type: String, required: true },
-    email: { type: String },
-    phone: { type: String, required: true },
-    bank: { type: String },
-    accountName: { type: String },
-    accountNumber: { type: String },
+    address: { type: String, default: "" },
+    city: { type: String, default: "" },
+    state: { type: String, default: "" },
+    email: { type: String, default: "" },
+    phone: { type: String, default: "" },
+    bank: { type: String, default: "" },
+    accountName: { type: String, default: "" },
+    accountNumber: { type: String, default: "" },
     isVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
@@ -31,7 +31,7 @@ function validateVendorPost(vendor) {
         accountNumber: Joi.string().allow(""),
         isVerified: Joi.boolean()
     };
-    
+
     return Joi.validate(vendor, schema);
 }
 
@@ -49,7 +49,7 @@ function validateVendorPatch(vendor) {
         accountNumber: Joi.string().allow(""),
         isVerified: Joi.boolean()
     };
-    
+
     return Joi.validate(vendor, schema);
 }
 
