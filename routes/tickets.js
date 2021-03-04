@@ -18,6 +18,7 @@ const { Ticket,
 const { User } = require("../models/user");
 const { Workflow } = require("../models/workflow");
 const { Phase } = require("../models/phase");
+const { Vendor } = require("../models/vendor");
 const { Category } = require("../models/category");
 const { Document } = require("../models/document");
 const { Comment } = require("../models/comment");
@@ -126,6 +127,7 @@ router.patch("/:id", userAuth, upload, async (req, res) => {
     const payload = {
       email: approver.email,
       firstName: approver.firstName,
+      ticket: { description: ticket.description, items: ticket.items, dueDate: ticketDueDate },
       mailOptions: { mailType: "sendApprovalMail" }
     }
     await publishToQueue(payload);
@@ -167,7 +169,16 @@ router.post("/", userAuth, upload, async (req, res) => {
 
   let isPossibleDuplicate = false;
 
-  const { category, department, vendor, numberOfItems, items, description, dueDate, amount, comment } = req.body;
+  const { category, department, vendorName, numberOfItems,
+    items, description, dueDate, amount, comment } = req.body;
+
+  let vendorModel = await Vendor.find({name: vendorName});
+  if(commonFunctions.isEmpty(vendorModel)) return response.error(res, "vendor is empty")
+  // if(!vendorModel) return response.error(res, "Could not create or find vendor");
+
+  vendorModel = await Vendor.create({ name: vendorName });
+
+  const vendor = vendorModel._id;
 
   // mitigate duplicate ticket issuing
   payload = await analyzeTicket(category, vendor, amount, dueDate, ref);
