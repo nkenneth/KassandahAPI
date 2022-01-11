@@ -4,7 +4,7 @@
   "app_domain": "https://api.kassandah.gigmobility.com",
   "front_app_domain": "https://kassandah.gigmobility.com",
   "APP_URL": "https://api.kassandah.gigmobility.com",
-  "dbMlab": "mongodb+srv://testuser:test1234user1234secret@cluster0.gv6g6.mongodb.net/papdb?retryWrites=true&w=majority",
+  "dbMlab": "mongodb+srv://mobility:1t@dmin123@cluster0.eqlf0.mongodb.net/kassandah?retryWrites=true&w=majority",
   "port": "9700",
   "jwtPrivateKey": "isiLRTBlmSt0Y9qjtU6NTuHIP7xU2XoivazUXrfePFGwbhb7mtrNkqLBS3YRrWam",
   "jwtRefreshTokenPrivateKey": "RIaPfryYBa6tNU9rzEFoxgipFZaJOfCkgdD8elUTu5SsQKDb0HapSIzabQNm8axa",
